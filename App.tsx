@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, PromotionalBannerData, Product, VendorApplication } from './types';
 import Header from './components/Header';
@@ -36,6 +37,7 @@ import ApiKeyError from './components/ApiKeyError';
 
 
 const App: React.FC = () => {
+  // FIX: Use process.env.API_KEY as per the guidelines.
   if (!process.env.API_KEY) {
     return <ApiKeyError />;
   }

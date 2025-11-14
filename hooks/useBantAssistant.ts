@@ -1,4 +1,5 @@
 
+
 import { useState, useEffect, useCallback } from 'react';
 import { ChatMessage, LeadDetails, BantStage, BantData, StoredConversation } from '../types';
 import { qualifyLead } from '../services/geminiService';
@@ -21,10 +22,10 @@ const useBantAssistant = (leadDetails: LeadDetails) => {
 
   const startConversation = useCallback(() => {
     setMessages([]); // Clear previous messages
-    addMessage('ai', `Hi ${leadDetails.name}, I'm BANTConfirm's AI assistant. I'll ask a few quick questions to understand your needs for ${leadDetails.service}.`);
+    addMessage('ai', `Hi ${leadDetails.name}, I'm BANTConfirm's AI assistant. To connect you with the best vendors for ${leadDetails.service}, I'll quickly qualify your request using the BANT framework (Budget, Authority, Need, and Timeline).`);
     setTimeout(() => {
         addMessage('ai', BANT_STAGE_PROMPTS[BANT_STAGES_ORDER[0]]);
-    }, 1000);
+    }, 1500); // Increased timeout for longer message
      // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leadDetails.name, leadDetails.service]);
 

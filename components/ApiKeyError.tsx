@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 const ApiKeyError: React.FC = () => (
@@ -10,17 +11,23 @@ const ApiKeyError: React.FC = () => (
         </svg>
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration Error</h2>
+      {/* FIX: Updated error message to reference API_KEY and provide generic instructions. */}
       <p className="text-gray-600 mb-6">
         The application requires an environment variable named <code className="bg-gray-200 text-red-700 font-mono p-1 rounded">API_KEY</code> to connect to the AI service, but it was not found.
       </p>
       <div className="bg-gray-50 p-4 rounded-lg text-left text-sm">
-        <p className="font-semibold text-gray-800 mb-2">How to Fix:</p>
-        <p className="text-gray-600">
-          Please ensure the <code className="bg-gray-200 text-green-700 font-mono p-0.5 rounded">API_KEY</code> environment variable is set in your deployment configuration. This variable should contain your valid Google AI API key.
-        </p>
-        <p className="text-gray-600 mt-2">
-          If you are deploying on Vercel, go to your <strong>Project Settings &rarr; Environment Variables</strong> and add your key. Then, redeploy the application.
-        </p>
+        <p className="font-semibold text-gray-800 mb-2">How to Fix on your deployment platform (e.g., Vercel):</p>
+        <ol className="list-decimal list-inside text-gray-600 space-y-2">
+            <li>Go to your Project Settings &rarr; <strong>Environment Variables</strong>.</li>
+            <li>
+                Create a new variable with the name <code className="bg-gray-200 text-green-700 font-mono p-0.5 rounded">API_KEY</code>.
+            </li>
+            <li>Paste your Google AI API key as the value.</li>
+            <li>Ensure the variable is set for all environments (Production, Preview, and Development).</li>
+            <li>
+                <strong>Create a new deployment</strong> for the change to take effect.
+            </li>
+        </ol>
       </div>
     </div>
   </div>

@@ -1,4 +1,6 @@
 
+
+
 import { GoogleGenAI, Type } from '@google/genai';
 import { BantStage, ChatMessage, GeminiResponse, LeadDetails, AIRecommendation, Vendor, Service, RequirementListing, AIMatch } from '../types';
 
@@ -8,13 +10,12 @@ let aiInstance: GoogleGenAI | null = null;
 
 const getAI = (): GoogleGenAI => {
   if (!aiInstance) {
-    const apiKey = process.env.API_KEY;
-    if (!apiKey) {
-      // This should not be reached if the App component's check is working,
-      // but it's a safeguard.
-      throw new Error("API Key not found. Please set API_KEY environment variable.");
+    // FIX: Use process.env.API_KEY as per the guidelines.
+    if (!process.env.API_KEY) {
+      // This error is a safeguard. The main check is in App.tsx which shows a user-friendly message.
+      throw new Error("API Key not found. Please set API_KEY environment variable in your deployment settings.");
     }
-    aiInstance = new GoogleGenAI({ apiKey });
+    aiInstance = new GoogleGenAI({ apiKey: process.env.API_KEY });
   }
   return aiInstance;
 };
