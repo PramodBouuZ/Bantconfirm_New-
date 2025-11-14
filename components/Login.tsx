@@ -40,7 +40,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, users }) => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
-            placeholder="admin@bantconfirm.com"
+            placeholder="your.email@company.com"
             required
           />
         </div>
@@ -52,7 +52,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, users }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
-            placeholder="any password will work"
+            placeholder="Enter your password"
             required
           />
         </div>
