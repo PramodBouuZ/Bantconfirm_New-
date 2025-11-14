@@ -2,11 +2,23 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { BantStage, ChatMessage, GeminiResponse, LeadDetails, AIRecommendation, Vendor, Service, RequirementListing, AIMatch } from '../types';
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set");
-}
+// Lazily initialize the GoogleGenAI instance to prevent startup errors
+// when the API key is not yet available.
+let aiInstance: GoogleGenAI | null = null;
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const getAI = (): GoogleGenAI => {
+  if (!aiInstance) {
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) {
+      // This should not be reached if the App component's check is working,
+      // but it's a safeguard.
+      throw new Error("API Key not found. Please set API_KEY environment variable.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+};
+
 
 const bantResponseSchema = {
   type: Type.OBJECT,
@@ -65,6 +77,7 @@ export const qualifyLead = async (
   `;
 
   try {
+    const ai = getAI();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: prompt,
@@ -138,6 +151,7 @@ export const findSolution = async (query: string, services: Service[], vendors: 
     `;
 
     try {
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
@@ -202,6 +216,7 @@ export const matchVendorsToListing = async (listing: RequirementListing, vendors
     `;
 
     try {
+        const ai = getAI();
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
