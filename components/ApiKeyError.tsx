@@ -18,6 +18,9 @@ const ApiKeyError: React.FC = () => (
         <p className="text-gray-600">
           Please ensure the <code className="bg-gray-200 text-green-700 font-mono p-0.5 rounded">API_KEY</code> environment variable is set in your deployment configuration. This variable should contain your valid Google AI API key.
         </p>
+        <p className="text-gray-600 mt-2">
+          If you are deploying on Vercel, go to your <strong>Project Settings &rarr; Environment Variables</strong> and add your key. Then, redeploy the application.
+        </p>
       </div>
     </div>
   </div>
