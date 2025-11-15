@@ -383,7 +383,7 @@ const App: React.FC = () => {
     setPromoBanner(data);
   };
   
-  const handleAddProduct = (product: Product) => {
+  const handleAddProduct = (product: Omit<Product, 'id'>) => {
     setProducts(prev => [{...product, id: Date.now()}, ...prev]);
   };
 
