@@ -9,7 +9,7 @@ import AdminUsers from './AdminUsers';
 import { DashboardIcon } from '../icons/DashboardIcon';
 import { ListingsIcon } from '../icons/ListingsIcon';
 import { VendorsIcon } from '../icons/VendorsIcon';
-import { UsersIcon } from '../icons/UsersIcon';
+import { UserIcon } from '../icons/UserIcon';
 import AdminServices from './AdminServices';
 import { ServicesIcon } from '../icons/ServicesIcon';
 import { LeadIcon } from '../icons/LeadIcon';
@@ -22,6 +22,8 @@ import { ApplicationIcon } from '../icons/ApplicationIcon';
 import { SettingsIcon } from '../icons/SettingsIcon';
 import { TrackerIcon } from '../icons/TrackerIcon';
 import AdminLeadTracker from './AdminLeadTracker';
+// FIX: Imported the missing UsersIcon component.
+import { UsersIcon } from '../icons/UsersIcon';
 
 type AdminView = 'stats' | 'listings' | 'vendors' | 'users' | 'services' | 'leads' | 'siteSettings' | 'products' | 'applications' | 'leadTracker';
 
@@ -57,6 +59,32 @@ interface AdminDashboardProps {
     onDeleteProduct: (productId: number) => void;
 }
 
+const HorizontalNavItem: React.FC<{
+    icon: React.ReactNode;
+    label: string;
+    isActive: boolean;
+    onClick: () => void;
+}> = ({ icon, label, isActive, onClick }) => {
+    const iconIsDiv = React.isValidElement(icon) && icon.type === 'div';
+
+    return (
+        <button
+            onClick={onClick}
+            className={`flex items-center py-2 px-4 rounded-md transition-colors duration-200 whitespace-nowrap ${
+                isActive
+                    ? 'bg-blue-600 text-white shadow'
+                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-800'
+            }`}
+        >
+            <span className={`mr-2 ${iconIsDiv ? 'flex items-center justify-center w-5 h-5' : ''}`}>
+              {icon}
+            </span>
+            <span className="font-semibold text-sm">{label}</span>
+        </button>
+    );
+};
+
+
 const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     const { 
         user, stats, listings, vendors, users, services, leads, siteConfig, products, vendorApplications,
@@ -68,7 +96,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
         onAddProduct, onUpdateProduct, onDeleteProduct,
     } = props;
     
-    const [view, setView] = useState<AdminView>('stats');
+    const [view, setView] = useState<AdminView>('leadTracker');
+
+    const navItems: { view: AdminView; label: string; icon: React.ReactNode }[] = [
+        { view: 'stats', label: 'Dashboard', icon: <DashboardIcon /> },
+        { view: 'applications', label: 'Applications', icon: <ApplicationIcon /> },
+        { view: 'leads', label: 'Leads', icon: <UserIcon /> },
+        { view: 'leadTracker', label: 'Lead Tracker', icon: <TrackerIcon /> },
+        { view: 'listings', label: 'Listings', icon: <ListingsIcon /> },
+        { view: 'products', label: 'Products', icon: <ProductsIcon /> },
+        { view: 'vendors', label: 'Vendors', icon: <VendorsIcon /> },
+        { view: 'users', label: 'Users', icon: <UsersIcon /> },
+        { view: 'services', label: 'Services', icon: <ServicesIcon /> },
+        { view: 'siteSettings', label: 'Site Settings', icon: <SettingsIcon /> },
+    ];
+
 
     const renderView = () => {
         switch (view) {
@@ -112,48 +154,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     };
 
     return (
-        <div className="flex flex-col md:flex-row gap-8 min-h-[calc(100vh-210px)]">
-            <aside className="w-full md:w-1/4 lg:w-1/5 bg-white p-4 rounded-xl shadow-lg border border-gray-200 self-start">
-                <nav className="flex flex-row md:flex-col gap-2">
-                    <NavItem icon={<DashboardIcon />} label="Dashboard" isActive={view === 'stats'} onClick={() => setView('stats')} />
-                    <NavItem icon={<ApplicationIcon />} label="Applications" isActive={view === 'applications'} onClick={() => setView('applications')} />
-                    <NavItem icon={<LeadIcon />} label="Leads" isActive={view === 'leads'} onClick={() => setView('leads')} />
-                    <NavItem icon={<TrackerIcon />} label="Lead Tracker" isActive={view === 'leadTracker'} onClick={() => setView('leadTracker')} />
-                    <NavItem icon={<ListingsIcon />} label="Listings" isActive={view === 'listings'} onClick={() => setView('listings')} />
-                    <NavItem icon={<ProductsIcon />} label="Products" isActive={view === 'products'} onClick={() => setView('products')} />
-                    <NavItem icon={<VendorsIcon />} label="Vendors" isActive={view === 'vendors'} onClick={() => setView('vendors')} />
-                    <NavItem icon={<UsersIcon />} label="Users" isActive={view === 'users'} onClick={() => setView('users')} />
-                    <NavItem icon={<ServicesIcon />} label="Services" isActive={view === 'services'} onClick={() => setView('services')} />
-                    <NavItem icon={<SettingsIcon />} label="Site Settings" isActive={view === 'siteSettings'} onClick={() => setView('siteSettings')} />
+        <div>
+            <div className="overflow-x-auto scrollbar-hide mb-6">
+                <nav className="flex items-center space-x-1 bg-white p-1.5 rounded-lg shadow-sm border border-gray-200 w-max">
+                    {navItems.map(item => {
+                        const isActive = view === item.view;
+                        let icon = item.icon;
+                        // Special icon for active Lead Tracker per screenshot
+                        if (item.view === 'leadTracker' && isActive) {
+                            icon = <div className="w-2 h-2 bg-white rounded-sm" />;
+                        }
+
+                        return (
+                           <HorizontalNavItem 
+                                key={item.view}
+                                icon={icon}
+                                label={item.label}
+                                isActive={isActive}
+                                onClick={() => setView(item.view)}
+                           />
+                        )
+                    })}
                 </nav>
-            </aside>
-            <main className="w-full md:w-3/4 lg:w-4/5">
+            </div>
+            <main>
                 {renderView()}
             </main>
         </div>
     );
 };
-
-interface NavItemProps {
-    icon: React.ReactNode;
-    label: string;
-    isActive: boolean;
-    onClick: () => void;
-}
-
-const NavItem: React.FC<NavItemProps> = ({ icon, label, isActive, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`w-full flex items-center p-3 text-left rounded-lg transition-colors duration-200 ${
-            isActive
-                ? 'bg-indigo-600 text-white shadow'
-                : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-        }`}
-    >
-        {icon}
-        <span className="ml-3 font-medium">{label}</span>
-    </button>
-);
-
 
 export default AdminDashboard;
