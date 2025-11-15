@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, PromotionalBannerData, Product, VendorApplication } from './types';
 import Header from './components/Header';
@@ -33,15 +32,9 @@ import ToastNotification from './components/ToastNotification';
 import { PRODUCTS_DATA } from './data/products';
 import ProductCatalog from './components/ProductCatalog';
 import BecomeAVendorPage from './components/BecomeAVendorPage';
-import ApiKeyError from './components/ApiKeyError';
 
 
 const App: React.FC = () => {
-  // FIX: Use process.env.API_KEY as per the guidelines.
-  if (!process.env.API_KEY) {
-    return <ApiKeyError />;
-  }
-
   const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [leadDetails, setLeadDetails] = useState<LeadDetails | null>(null);
