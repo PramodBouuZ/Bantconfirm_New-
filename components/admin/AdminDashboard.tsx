@@ -1,5 +1,6 @@
 
 
+
 import React, { useState } from 'react';
 import { User, RequirementListing, Vendor, Service, QualifiedLead, SiteConfig, Product, VendorApplication } from '../../types';
 import AdminStats from './AdminStats';
@@ -9,10 +10,8 @@ import AdminUsers from './AdminUsers';
 import { DashboardIcon } from '../icons/DashboardIcon';
 import { ListingsIcon } from '../icons/ListingsIcon';
 import { VendorsIcon } from '../icons/VendorsIcon';
-import { UserIcon } from '../icons/UserIcon';
 import AdminServices from './AdminServices';
 import { ServicesIcon } from '../icons/ServicesIcon';
-import { LeadIcon } from '../icons/LeadIcon';
 import AdminLeads from './AdminLeads';
 import AdminSiteSettings from './AdminSiteSettings';
 import { ProductsIcon } from '../icons/ProductsIcon';
@@ -22,8 +21,8 @@ import { ApplicationIcon } from '../icons/ApplicationIcon';
 import { SettingsIcon } from '../icons/SettingsIcon';
 import { TrackerIcon } from '../icons/TrackerIcon';
 import AdminLeadTracker from './AdminLeadTracker';
-// FIX: Imported the missing UsersIcon component.
 import { UsersIcon } from '../icons/UsersIcon';
+import { LeadIcon } from '../icons/LeadIcon';
 
 type AdminView = 'stats' | 'listings' | 'vendors' | 'users' | 'services' | 'leads' | 'siteSettings' | 'products' | 'applications' | 'leadTracker';
 
@@ -101,7 +100,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     const navItems: { view: AdminView; label: string; icon: React.ReactNode }[] = [
         { view: 'stats', label: 'Dashboard', icon: <DashboardIcon /> },
         { view: 'applications', label: 'Applications', icon: <ApplicationIcon /> },
-        { view: 'leads', label: 'Leads', icon: <UserIcon /> },
+        { view: 'leads', label: 'Leads', icon: <LeadIcon /> },
         { view: 'leadTracker', label: 'Lead Tracker', icon: <TrackerIcon /> },
         { view: 'listings', label: 'Listings', icon: <ListingsIcon /> },
         { view: 'products', label: 'Products', icon: <ProductsIcon /> },

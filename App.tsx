@@ -477,7 +477,7 @@ const App: React.FC = () => {
           assignedAt: new Date().toISOString(),
           vendorNames: vendorNames,
         };
-        const updatedHistory = [...lead.assignmentHistory, newHistoryEntry];
+        const updatedHistory = [...(lead.assignmentHistory || []), newHistoryEntry];
         return {
           ...lead,
           status: 'Assigned',

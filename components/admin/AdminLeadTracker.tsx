@@ -19,7 +19,7 @@ const AdminLeadTracker: React.FC<AdminLeadTrackerProps> = ({ leads }) => {
   const allAssignments = useMemo((): FlattenedAssignment[] => {
     const flattened: FlattenedAssignment[] = [];
     leads.forEach(lead => {
-      lead.assignmentHistory.forEach(entry => {
+      lead.assignmentHistory?.forEach(entry => {
         flattened.push({
           ...entry,
           leadId: lead.id,
