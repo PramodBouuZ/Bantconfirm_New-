@@ -40,7 +40,24 @@ const App: React.FC = () => {
   const [leadDetails, setLeadDetails] = useState<LeadDetails | null>(null);
   const [bantData, setBantData] = useState<BantData | null>(null);
   const [initialServiceForForm, setInitialServiceForForm] = useState<string | undefined>();
-  const [listings, setListings] = useState<RequirementListing[]>(LISTINGS);
+  const [isMatching, setIsMatching] = useState(false);
+  const [savedConversation, setSavedConversation] = useState<StoredConversation | null>(null);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [toast, setToast] = useState<Notification | null>(null);
+  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
+  const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
+
+  // --- Persisted State ---
+  const [listings, setListings] = useState<RequirementListing[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_listings');
+      return saved ? JSON.parse(saved) : LISTINGS;
+    } catch (error) {
+      console.error("Failed to load listings from localStorage", error);
+      return LISTINGS;
+    }
+  });
+
   const [users, setUsers] = useState<User[]>(() => {
     try {
       const savedUsers = localStorage.getItem('bant_users');
@@ -50,26 +67,75 @@ const App: React.FC = () => {
       return USERS;
     }
   });
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [isMatching, setIsMatching] = useState(false);
-  const [savedConversation, setSavedConversation] = useState<StoredConversation | null>(null);
-  const [services, setServices] = useState<Service[]>(SERVICES_DATA);
-  const [vendors, setVendors] = useState<Vendor[]>(VENDORS_DATA);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [toast, setToast] = useState<Notification | null>(null);
-  const [qualifiedLeads, setQualifiedLeads] = useState<QualifiedLead[]>(LEADS_DATA);
-  const [promoBanner, setPromoBanner] = useState<PromotionalBannerData>({
-    isActive: true,
-    image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=2070&auto=format&fit=crop',
-    title: 'Supercharge Your Business!',
-    text: 'Discover our new Enterprise Solutions package. Get a free consultation today.',
-    link: '#',
-  });
-  const [products, setProducts] = useState<Product[]>(PRODUCTS_DATA);
-  const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
-  const [vendorApplications, setVendorApplications] = useState<VendorApplication[]>([]);
-  const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
 
+  const [services, setServices] = useState<Service[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_services');
+      return saved ? JSON.parse(saved) : SERVICES_DATA;
+    } catch (error) {
+      console.error("Failed to load services from localStorage", error);
+      return SERVICES_DATA;
+    }
+  });
+
+  const [vendors, setVendors] = useState<Vendor[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_vendors');
+      return saved ? JSON.parse(saved) : VENDORS_DATA;
+    } catch (error) {
+      console.error("Failed to load vendors from localStorage", error);
+      return VENDORS_DATA;
+    }
+  });
+
+  const [qualifiedLeads, setQualifiedLeads] = useState<QualifiedLead[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_qualified_leads');
+      return saved ? JSON.parse(saved) : LEADS_DATA;
+    } catch (error) {
+      console.error("Failed to load qualified leads from localStorage", error);
+      return LEADS_DATA;
+    }
+  });
+
+  const [promoBanner, setPromoBanner] = useState<PromotionalBannerData>(() => {
+    const initialData = {
+      isActive: true,
+      image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=2070&auto=format&fit=crop',
+      title: 'Supercharge Your Business!',
+      text: 'Discover our new Enterprise Solutions package. Get a free consultation today.',
+      link: '#',
+    };
+    try {
+      const saved = localStorage.getItem('bant_promo_banner');
+      return saved ? JSON.parse(saved) : initialData;
+    } catch (error) {
+      console.error("Failed to load promo banner from localStorage", error);
+      return initialData;
+    }
+  });
+
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_products');
+      return saved ? JSON.parse(saved) : PRODUCTS_DATA;
+    } catch (error) {
+      console.error("Failed to load products from localStorage", error);
+      return PRODUCTS_DATA;
+    }
+  });
+  
+  const [vendorApplications, setVendorApplications] = useState<VendorApplication[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_vendor_applications');
+      return saved ? JSON.parse(saved) : [];
+    } catch (error) {
+      console.error("Failed to load vendor applications from localStorage", error);
+      return [];
+    }
+  });
+
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   useEffect(() => {
     try {
@@ -102,14 +168,16 @@ const App: React.FC = () => {
     }
   }, [listings]);
 
+  // --- Save state to localStorage on changes ---
+  useEffect(() => { try { localStorage.setItem('bant_users', JSON.stringify(users)); } catch (e) { console.error(e); } }, [users]);
+  useEffect(() => { try { localStorage.setItem('bant_listings', JSON.stringify(listings)); } catch (e) { console.error(e); } }, [listings]);
+  useEffect(() => { try { localStorage.setItem('bant_services', JSON.stringify(services)); } catch (e) { console.error(e); } }, [services]);
+  useEffect(() => { try { localStorage.setItem('bant_vendors', JSON.stringify(vendors)); } catch (e) { console.error(e); } }, [vendors]);
+  useEffect(() => { try { localStorage.setItem('bant_qualified_leads', JSON.stringify(qualifiedLeads)); } catch (e) { console.error(e); } }, [qualifiedLeads]);
+  useEffect(() => { try { localStorage.setItem('bant_promo_banner', JSON.stringify(promoBanner)); } catch (e) { console.error(e); } }, [promoBanner]);
+  useEffect(() => { try { localStorage.setItem('bant_products', JSON.stringify(products)); } catch (e) { console.error(e); } }, [products]);
+  useEffect(() => { try { localStorage.setItem('bant_vendor_applications', JSON.stringify(vendorApplications)); } catch (e) { console.error(e); } }, [vendorApplications]);
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('bant_users', JSON.stringify(users));
-    } catch (error) {
-      console.error("Failed to save users to localStorage", error);
-    }
-  }, [users]);
 
   const handleNav = (view: AppView) => {
     if (view === AppView.HOME) {

@@ -37,23 +37,23 @@ const AISolutionFinder: React.FC<AISolutionFinderProps> = ({ onSelectService, se
       <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Solution Finder</h1>
         <p className="text-gray-600 mb-6">Describe your business challenge, and our AI will recommend the right solutions and vendors for you.</p>
-        <div className="flex flex-col sm:flex-row gap-2">
-          <textarea
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="e.g., 'I need to improve our team collaboration with a new phone and video system for 50 people.'"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-            rows={3}
-          />
-        </div>
-        {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        <button
-          onClick={handleFindSolution}
-          disabled={isLoading}
-          className="mt-4 w-full sm:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 disabled:bg-gray-400"
-        >
-          {isLoading ? 'Analyzing...' : 'Find My Solution'}
-        </button>
+        <form onSubmit={(e) => { e.preventDefault(); handleFindSolution(); }}>
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="e.g., 'I need a CRM for my sales team'"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="mt-4 w-full sm:w-auto bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 disabled:bg-gray-400"
+            >
+              {isLoading ? 'Analyzing...' : 'Find My Solution'}
+            </button>
+        </form>
       </div>
 
       {isLoading && <LoadingSpinner />}
