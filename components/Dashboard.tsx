@@ -1,28 +1,29 @@
 
-
 import React from 'react';
-import { User, RequirementListing, StoredConversation } from '../types';
+import { User, RequirementListing, StoredConversation, Product, PromotionalBannerData } from '../types';
 import ListingCard from './ListingCard';
 import ConversationHistory from './ConversationHistory';
 import KeyPointsHighlight from './KeyPointsHighlight';
-import PromotionalBanner from './PromotionalBanner';
 import ConfirmationBanner from './ConfirmationBanner';
+import ProductCard from './ProductCard';
+import PromotionalBannerDisplay from './PromotionalBannerDisplay';
 
 interface DashboardProps {
     user: User;
     userListings: RequirementListing[];
-    allListings: RequirementListing[];
+    products: Product[];
     isMatching: boolean;
     onPostRequirement: () => void;
     savedConversation: StoredConversation | null;
     onContinueConversation: () => void;
     confirmationMessage: string | null;
     onClearConfirmation: () => void;
-    onPostFromListing: (listing: RequirementListing) => void;
+    onPostFromProduct: (product: Product) => void;
+    promoBanner: PromotionalBannerData;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, userListings, allListings, isMatching, onPostRequirement, savedConversation, onContinueConversation, confirmationMessage, onClearConfirmation, onPostFromListing }) => {
-    const featuredListings = allListings.slice(0, 4);
+const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isMatching, onPostRequirement, savedConversation, onContinueConversation, confirmationMessage, onClearConfirmation, onPostFromProduct, promoBanner }) => {
+    const featuredProducts = products.slice(0, 4);
     
     return (
         <div>
@@ -77,7 +78,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, userListings, allListings, 
                 {userListings.length > 0 ? (
                     <div className="space-y-6">
                         {userListings.map(listing => (
-                            <ListingCard key={listing.id} {...listing} onPostNow={onPostFromListing} />
+                            <ListingCard key={listing.id} {...listing} onPostNow={() => { console.log("Post from listing on dashboard is not implemented yet.")}} />
                         ))}
                     </div>
                 ) : (
@@ -94,24 +95,25 @@ const Dashboard: React.FC<DashboardProps> = ({ user, userListings, allListings, 
                 )}
 
                 <div className="my-16">
-                    <PromotionalBanner />
+                    <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">Featured Promotion</h2>
+                    <PromotionalBannerDisplay banner={promoBanner} />
                 </div>
 
-                 {/* New Section: Featured Listings */}
+                 {/* New Section: Featured Products */}
                 <div>
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-bold text-gray-800">Explore Marketplace Listings</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">Explore Featured Products</h2>
                     </div>
-                    {featuredListings.length > 0 ? (
-                        <div className="space-y-6">
-                            {featuredListings.map(listing => (
-                                <ListingCard key={listing.id} {...listing} onPostNow={onPostFromListing} />
+                    {featuredProducts.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+                            {featuredProducts.map(product => (
+                                <ProductCard key={product.id} product={product} onPostNow={onPostFromProduct} />
                             ))}
                         </div>
                     ) : (
                         <div className="text-center py-16 px-6 bg-white rounded-xl shadow-lg border border-gray-200">
-                            <h3 className="text-xl font-bold text-gray-800">No Listings in the Marketplace Yet</h3>
-                            <p className="text-gray-500 mt-2">Check back later to see requirements posted by other businesses.</p>
+                            <h3 className="text-xl font-bold text-gray-800">No Products in the Marketplace Yet</h3>
+                            <p className="text-gray-500 mt-2">Check back later to see products added by our admin team.</p>
                         </div>
                     )}
                 </div>

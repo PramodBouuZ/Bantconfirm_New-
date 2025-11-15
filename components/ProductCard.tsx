@@ -21,7 +21,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPostNow }) => {
         <p className="text-sm text-gray-500 mt-1 mb-3 flex-grow">{description}</p>
         
         <div className="space-y-2 mb-4">
-          {features.slice(0, 4).map((feature, index) => (
+          {features.slice(0, 3).map((feature, index) => (
             <div key={index} className="flex items-start text-sm">
               <CheckIcon />
               <span className="ml-2 text-gray-600">{feature}</span>
@@ -29,7 +29,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPostNow }) => {
           ))}
         </div>
       </div>
-      <div className="p-5 bg-gray-50 border-t border-gray-200 mt-auto">
+      <div className="p-5 border-t border-gray-200 mt-auto">
         <div className="flex justify-between items-center">
           <p className="text-xl font-bold text-gray-900">{price}</p>
           <button 

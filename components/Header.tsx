@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { AppView, User, Notification } from '../types';
 import { AdminIcon } from './icons/AdminIcon';
@@ -53,7 +54,6 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
             </div>
           </div>
           <nav className="hidden md:flex items-center space-x-8">
-            <a onClick={() => onNav(AppView.MARKETPLACE)} className="text-gray-600 hover:text-indigo-600 font-medium transition-colors cursor-pointer">Vendor Directory</a>
             <a onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="text-gray-600 hover:text-indigo-600 font-medium transition-colors cursor-pointer">Browse Listings</a>
             <a onClick={() => onNav(currentUser ? AppView.POST_REQUIREMENT : AppView.SIGNUP)} className="text-gray-600 hover:text-indigo-600 font-medium transition-colors cursor-pointer">Post Requirement</a>
             {currentUser?.isAdmin && (

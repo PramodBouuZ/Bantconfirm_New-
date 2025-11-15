@@ -8,7 +8,6 @@ import LeadForm from './components/LeadForm';
 import BantAssistant from './components/BantAssistant';
 import LeadConfirmation from './components/LeadConfirmation';
 import ServiceDetail from './components/ServiceDetail';
-import Marketplace from './components/Marketplace';
 import Hero from './components/Hero';
 import AISolutionFinder from './components/AISolutionFinder';
 import ListingsMarketplace from './components/ListingsMarketplace';
@@ -32,6 +31,7 @@ import ToastNotification from './components/ToastNotification';
 import { PRODUCTS_DATA } from './data/products';
 import ProductCatalog from './components/ProductCatalog';
 import BecomeAVendorPage from './components/BecomeAVendorPage';
+import PromotionalBannerDisplay from './components/PromotionalBannerDisplay';
 
 
 const App: React.FC = () => {
@@ -339,12 +339,23 @@ const App: React.FC = () => {
     setServices(prev => prev.filter(s => s.name !== serviceName));
   };
 
+  const CLOUD_HERO_IMAGE = 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=2231&auto=format&fit=crop';
+
+  const processVendorHeroImage = (vendor: Vendor): Vendor => {
+    if (vendor.specialties.includes('Cloud Solutions')) {
+        return { ...vendor, heroImageUrl: CLOUD_HERO_IMAGE };
+    }
+    return vendor;
+  };
+
   const handleAddVendor = (vendor: Vendor) => {
-    setVendors(prev => [...prev, vendor]);
+    const processedVendor = processVendorHeroImage(vendor);
+    setVendors(prev => [...prev, processedVendor]);
   };
   
   const handleUpdateVendor = (updatedVendor: Vendor) => {
-    setVendors(prev => prev.map(v => v.name === updatedVendor.name ? updatedVendor : v));
+    const processedVendor = processVendorHeroImage(updatedVendor);
+    setVendors(prev => prev.map(v => v.name === processedVendor.name ? processedVendor : v));
   };
   
   const handleDeleteVendor = (vendorName: string) => {
@@ -453,6 +464,7 @@ const App: React.FC = () => {
           services={services}
           vendors={vendors}
           products={products}
+          promoBanner={promoBanner}
           onFindSolution={() => handleNav(AppView.AI_SOLUTION_FINDER)} 
           onPostRequirement={() => handleNav(currentUser ? AppView.POST_REQUIREMENT : AppView.SIGNUP)}
           onSelectService={handleSelectService}
@@ -466,14 +478,15 @@ const App: React.FC = () => {
         return <Dashboard 
           user={currentUser} 
           userListings={listings.filter(l => l.authorName === currentUser.name)}
-          allListings={listings}
+          products={products}
           isMatching={isMatching}
           onPostRequirement={() => handleNav(AppView.POST_REQUIREMENT)}
           savedConversation={savedConversation}
           onContinueConversation={handleContinueConversation}
           confirmationMessage={confirmationMessage}
           onClearConfirmation={() => setConfirmationMessage(null)}
-          onPostFromListing={handlePostFromListing}
+          onPostFromProduct={handlePostFromProduct}
+          promoBanner={promoBanner}
         />
       case AppView.ADMIN_DASHBOARD:
          if (!currentUser || !currentUser.isAdmin) {
@@ -516,8 +529,6 @@ const App: React.FC = () => {
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}
         />
-      case AppView.MARKETPLACE:
-        return <Marketplace services={services} vendors={vendors} />;
       case AppView.SERVICE_DETAIL: {
         if (!selectedService) {
           setCurrentView(homeView);
@@ -555,10 +566,9 @@ const App: React.FC = () => {
         return <AISolutionFinder onSelectService={handleSelectService} services={services} vendors={vendors} />;
       case AppView.LISTINGS_MARKETPLACE:
         return <ListingsMarketplace 
-                 listings={listings} 
+                 products={products} 
                  onPostRequirement={() => handleNav(currentUser ? AppView.POST_REQUIREMENT : AppView.SIGNUP)} 
-                 onPostFromListing={handlePostFromListing}
-                 highlightedListingId={highlightedListingId}
+                 onPostFromProduct={handlePostFromProduct}
                />;
        case AppView.POST_REQUIREMENT:
         if (!currentUser) {
@@ -615,13 +625,14 @@ interface HomeProps {
   services: Service[];
   vendors: Vendor[];
   products: Product[];
+  promoBanner: PromotionalBannerData;
   onFindSolution: () => void;
   onPostRequirement: () => void;
   onSelectService: (service: Service) => void;
   onPostNow: (product: Product) => void;
 }
 
-const Home: React.FC<HomeProps> = ({ services, vendors, products, onFindSolution, onPostRequirement, onSelectService, onPostNow }) => (
+const Home: React.FC<HomeProps> = ({ services, vendors, products, promoBanner, onFindSolution, onPostRequirement, onSelectService, onPostNow }) => (
   <div>
     <Hero onPrimaryAction={onFindSolution} onSecondaryAction={onPostRequirement} />
     <CommissionBanner />
@@ -637,6 +648,12 @@ const Home: React.FC<HomeProps> = ({ services, vendors, products, onFindSolution
         </div>
     </section>
     <ProductCatalog products={products} onPostNow={onPostNow} />
+    <section className="py-16 bg-gray-50">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-center mb-10 text-gray-900">Special Offers</h2>
+          <PromotionalBannerDisplay banner={promoBanner} />
+      </div>
+    </section>
     <VendorLogos vendors={vendors} />
   </div>
 );
