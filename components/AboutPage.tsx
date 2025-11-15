@@ -11,7 +11,7 @@ const AboutPage: React.FC = () => {
   return (
     <div className="bg-white">
       {/* Hero Section */}
-      <div className="relative bg-indigo-700 text-white text-center py-20 md:py-32">
+      <div className="relative bg-blue-700 text-white text-center py-20 md:py-32">
         <div 
             className="absolute inset-0 bg-cover bg-center opacity-20"
             style={{ backgroundImage: "url('https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=2084&auto=format&fit=crop')" }}
@@ -28,11 +28,11 @@ const AboutPage: React.FC = () => {
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Mission</h2>
             <p className="text-gray-600 leading-relaxed mb-6">
-              To simplify the complex world of B2B technology procurement. We empower businesses to find the perfect solutions and vendors with unparalleled speed, clarity, and confidence by leveraging cutting-edge AI.
+              To simplify the complex world of B2B technology procurement. We empower businesses to find the perfect solutions and vendors with unparalleled speed, clarity, and confidence by leveraging our AI-powered BANT qualification framework.
             </p>
             <h2 className="text-3xl font-bold text-gray-900 mb-4">Our Vision</h2>
             <p className="text-gray-600 leading-relaxed">
-              To become the world's most trusted and efficient B2B marketplace, creating a transparent ecosystem where every business, regardless of size, has access to the tools and partners they need to thrive.
+              To become the world's most trusted B2B marketplace for IT and software solutions, creating a transparent ecosystem where every submitted lead is a valuable, qualified opportunity for our network of vendors.
             </p>
           </div>
           <div className="rounded-lg overflow-hidden shadow-2xl">
@@ -53,7 +53,7 @@ const AboutPage: React.FC = () => {
               <div key={member.name} className="text-center bg-white p-6 rounded-xl shadow-lg border border-gray-200">
                 <img className="w-32 h-32 rounded-full mx-auto mb-4 object-cover" src={member.imageUrl} alt={member.name} />
                 <h3 className="text-xl font-bold text-gray-900">{member.name}</h3>
-                <p className="text-indigo-600 font-semibold">{member.title}</p>
+                <p className="text-blue-600 font-semibold">{member.title}</p>
               </div>
             ))}
           </div>

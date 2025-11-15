@@ -1,5 +1,4 @@
-
-import { BantStage, ChatMessage, GeminiResponse, LeadDetails, AIRecommendation, Vendor, Service, RequirementListing, AIMatch } from '../types';
+import { BantStage, ChatMessage, GeminiResponse, LeadDetails, AIRecommendation, Vendor, Service, RequirementListing, AIMatch, QualifiedLead, User, LeadPosterStage } from '../types';
 
 /**
  * All functions now call the `/api/gemini` serverless function,
@@ -102,4 +101,64 @@ export const matchVendorsToListing = async (listing: RequirementListing, vendors
         console.error("Error calling backend API for vendor matching:", error);
         return [];
     }
+};
+
+export const matchVendorsToLead = async (lead: QualifiedLead, vendors: Vendor[]): Promise<string[]> => {
+    try {
+        const response = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: 'matchVendorsToLead',
+                payload: { lead, vendors },
+            }),
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("API error from backend:", errorData.error);
+            throw new Error(`API error: ${response.statusText}`);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error("Error calling backend API for lead-vendor matching:", error);
+        return []; // Return empty array on failure
+    }
+};
+
+export const generateRequirementWithAI = async (
+  userInput: string,
+  stage: LeadPosterStage,
+  history: ChatMessage[],
+  currentUser: User,
+) => {
+  try {
+    const response = await fetch('/api/gemini', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        type: 'generateRequirement',
+        payload: { userInput, stage, history, currentUser },
+      }),
+    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error("API error from backend:", errorData.error);
+      throw new Error(`API error: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error calling backend API for generateRequirement:', error);
+    return {
+      analysis: "I'm having trouble processing that. Please try again.",
+      extractedTitle: "",
+      extractedDescription: "",
+      extractedCategory: "",
+      isComplete: false,
+      nextQuestion: "Could you please rephrase your response?",
+    };
+  }
 };

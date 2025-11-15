@@ -1,12 +1,14 @@
 
+
 import React from 'react';
-import { User, RequirementListing, StoredConversation, Product, PromotionalBannerData } from '../types';
+import { User, RequirementListing, StoredConversation, Product, PromotionalBannerData, StoredLeadPosterConversation } from '../types';
 import ListingCard from './ListingCard';
 import ConversationHistory from './ConversationHistory';
 import KeyPointsHighlight from './KeyPointsHighlight';
 import ConfirmationBanner from './ConfirmationBanner';
 import ProductCard from './ProductCard';
 import PromotionalBannerDisplay from './PromotionalBannerDisplay';
+import ContinueLeadPoster from './ContinueLeadPoster';
 
 interface DashboardProps {
     user: User;
@@ -16,13 +18,16 @@ interface DashboardProps {
     onPostRequirement: () => void;
     savedConversation: StoredConversation | null;
     onContinueConversation: () => void;
+    savedLeadPosterConversation: StoredLeadPosterConversation | null;
+    onContinueLeadPosterConversation: () => void;
     confirmationMessage: string | null;
     onClearConfirmation: () => void;
-    onPostFromProduct: (product: Product) => void;
     promoBanner: PromotionalBannerData;
+    onSelectProduct: (product: Product) => void;
+    onBookDemo: (product: Product) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isMatching, onPostRequirement, savedConversation, onContinueConversation, confirmationMessage, onClearConfirmation, onPostFromProduct, promoBanner }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isMatching, onPostRequirement, savedConversation, onContinueConversation, savedLeadPosterConversation, onContinueLeadPosterConversation, confirmationMessage, onClearConfirmation, promoBanner, onSelectProduct, onBookDemo }) => {
     const featuredProducts = products.slice(0, 4);
     
     return (
@@ -43,11 +48,21 @@ const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isM
                     </div>
                 )}
 
+                {/* Unfinished Lead Poster Conversation */}
+                {savedLeadPosterConversation && (
+                    <div className="mb-10">
+                        <ContinueLeadPoster
+                            conversation={savedLeadPosterConversation}
+                            onContinue={onContinueLeadPosterConversation}
+                        />
+                    </div>
+                )}
+
                 <div className="mb-10">
                     <KeyPointsHighlight onPostRequirement={onPostRequirement} />
                 </div>
 
-                {/* Saved Conversation */}
+                {/* Saved BANT Conversation */}
                 {savedConversation && (
                     <div className="mb-10">
                         <ConversationHistory
@@ -64,7 +79,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isM
                         className="bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 transition-colors duration-300 flex items-center"
                     >
                          <PlusIcon />
-                        Post New Requirement
+                        Post with AI Assistant
                     </button>
                 </div>
 
@@ -78,7 +93,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isM
                 {userListings.length > 0 ? (
                     <div className="space-y-6">
                         {userListings.map(listing => (
-                            <ListingCard key={listing.id} {...listing} onPostNow={() => { console.log("Post from listing on dashboard is not implemented yet.")}} />
+                            <ListingCard key={listing.id} {...listing} showActions={false} />
                         ))}
                     </div>
                 ) : (
@@ -107,7 +122,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, userListings, products, isM
                     {featuredProducts.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
                             {featuredProducts.map(product => (
-                                <ProductCard key={product.id} product={product} onPostNow={onPostFromProduct} />
+                                <ProductCard 
+                                  key={product.id} 
+                                  product={product} 
+                                  onSelect={onSelectProduct}
+                                  onBookDemo={onBookDemo} 
+                                />
                             ))}
                         </div>
                     ) : (

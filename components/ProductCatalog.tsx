@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
@@ -20,7 +21,7 @@ const ProductCatalog: React.FC<ProductCatalogProps> = ({ products, onPostNow }) 
         <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">Explore our curated selection of top-tier solutions designed to elevate your business.</p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
           {products.slice(0, 10).map((product) => (
-            <ProductCard key={product.id} product={product} onPostNow={onPostNow} />
+            <ProductCard key={product.id} product={product} onSelect={onPostNow} onBookDemo={() => {}} />
           ))}
         </div>
       </div>

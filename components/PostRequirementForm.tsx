@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import { RequirementListing, ListingCategory, User } from '../types';
 
 interface PostRequirementFormProps {
-  // FIX: Updated Omit to exclude `status` and `assignedVendorNames`, which are handled by the parent component.
   onPost: (details: Omit<RequirementListing, 'id' | 'postedDate' | 'aiMatches' | 'status' | 'assignedVendorNames'>) => void;
   currentUser: User | null;
 }

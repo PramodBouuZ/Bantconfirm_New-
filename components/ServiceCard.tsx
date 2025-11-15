@@ -1,24 +1,32 @@
+
 import React from 'react';
-import { Service } from '../types';
 import { SERVICE_ICONS } from './icons/serviceIcons';
 
-interface ServiceCardProps extends Service {
+interface ServiceCardProps {
+  name: string;
+  icon: string;
   onSelect: () => void;
+  itemCount: number;
+  isActive?: boolean;
 }
 
-const ServiceCard: React.FC<ServiceCardProps> = ({ name, description, icon, onSelect }) => {
+const ServiceCard: React.FC<ServiceCardProps> = ({ name, icon, onSelect, itemCount, isActive }) => {
   const IconComponent = SERVICE_ICONS[icon] || null;
+
+  const baseClasses = "bg-white p-4 rounded-md transition-all duration-300 text-center border hover:shadow-md cursor-pointer flex flex-col items-center justify-start h-full";
+  const activeClasses = "border-blue-500 shadow-md bg-blue-50";
+  const inactiveClasses = "border-gray-200 hover:border-blue-500";
 
   return (
     <div 
       onClick={onSelect}
-      className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 text-center border border-gray-200 cursor-pointer"
+      className={`${baseClasses} ${isActive ? activeClasses : inactiveClasses}`}
     >
-      <div className="flex justify-center items-center mb-4 text-indigo-600 h-12">
+      <div className="flex justify-center items-center mb-2 text-blue-600 h-8 w-8">
         {IconComponent && <IconComponent />}
       </div>
-      <h3 className="text-lg font-bold text-gray-900 mb-2">{name}</h3>
-      <p className="text-gray-600 text-sm">{description}</p>
+      <h3 className="text-sm font-bold text-gray-900">{name}</h3>
+      <p className="text-xs text-gray-500 mt-1">{itemCount} items</p>
     </div>
   );
 };

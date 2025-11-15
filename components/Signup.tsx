@@ -60,14 +60,14 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
         </div>
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300"
+          className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"
         >
           Create Account
         </button>
       </form>
        <p className="text-center text-sm text-gray-600 mt-6">
         Already have an account?{' '}
-        <button onClick={onSwitchToLogin} className="font-semibold text-indigo-600 hover:text-indigo-500">
+        <button onClick={onSwitchToLogin} className="font-semibold text-blue-600 hover:text-blue-500">
           Log In
         </button>
       </p>

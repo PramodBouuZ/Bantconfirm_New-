@@ -4,10 +4,11 @@ import { User } from '../types';
 interface LoginProps {
   onLogin: (user: User) => void;
   onSwitchToSignup: () => void;
+  onForgotPassword: () => void;
   users: User[];
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, users }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPassword, users }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -30,7 +31,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, users }) => {
   return (
     <div className="max-w-md mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200">
       <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">Welcome Back</h2>
-      <p className="text-gray-600 mb-8 text-center">Log in to access your dashboard.</p>
+      <p className="text-gray-600 mb-8 text-center">Log in to your BANTConfirm dashboard.</p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
@@ -56,19 +57,29 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, users }) => {
             required
           />
         </div>
+        
+        <div className="flex items-center justify-end">
+            <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-sm font-medium text-blue-600 hover:text-blue-500"
+            >
+                Forgot password?
+            </button>
+        </div>
 
         {error && <p className="text-red-500 text-xs mt-1 text-center">{error}</p>}
 
         <button
           type="submit"
-          className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300"
+          className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"
         >
           Login
         </button>
       </form>
       <p className="text-center text-sm text-gray-600 mt-6">
         Don't have an account?{' '}
-        <button onClick={onSwitchToSignup} className="font-semibold text-indigo-600 hover:text-indigo-500">
+        <button onClick={onSwitchToSignup} className="font-semibold text-blue-600 hover:text-blue-500">
           Sign Up
         </button>
       </p>

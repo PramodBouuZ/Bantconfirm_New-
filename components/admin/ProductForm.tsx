@@ -11,6 +11,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
     const [name, setName] = useState('');
     const [image, setImage] = useState('');
     const [price, setPrice] = useState('');
+    const [priceUnit, setPriceUnit] = useState('');
     const [description, setDescription] = useState('');
     const [features, setFeatures] = useState('');
     const [error, setError] = useState('');
@@ -22,6 +23,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
             setName(product.name);
             setImage(product.image);
             setPrice(product.price);
+            setPriceUnit(product.priceUnit || '');
             setDescription(product.description);
             setFeatures(product.features.join('\n'));
         }
@@ -52,6 +54,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
             name,
             image,
             price,
+            priceUnit,
             description,
             features: featuresArray
         };
@@ -84,9 +87,15 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
                         <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                         <input type="text" id="name" value={name} onChange={(e) => setName(e.target.value)} required className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"/>
                     </div>
-                    <div>
-                        <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                        <input type="text" id="price" value={price} onChange={(e) => setPrice(e.target.value)} required className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300" placeholder="₹499/mo or ₹45/user/mo"/>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                            <input type="text" id="price" value={price} onChange={(e) => setPrice(e.target.value)} required className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300" placeholder="e.g., ₹159"/>
+                        </div>
+                        <div>
+                            <label htmlFor="priceUnit" className="block text-sm font-medium text-gray-700 mb-1">Price Unit</label>
+                            <input type="text" id="priceUnit" value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300" placeholder="e.g., / month"/>
+                        </div>
                     </div>
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>

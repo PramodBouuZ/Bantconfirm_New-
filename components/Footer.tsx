@@ -1,76 +1,84 @@
+
 import React from 'react';
-import { AppView } from '../types';
-
-const HighlightIconWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-    <div className="flex justify-center items-center mb-4 text-indigo-400 h-10">
-        {children}
-    </div>
-);
-
-const AiIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H9M15 15H9M12 21V15M4 11.642a4 4 0 100 5.292m16-5.292a4 4 0 110 5.292" />
-    </svg>
-);
-
-const VerifiedIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 20.917L12 23l9-2.083A12.02 12.02 0 0017.618 7.984z" />
-    </svg>
-);
-
-const PercentIcon = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
-        <path fillRule="evenodd" d="M14.615 1.585a.75.75 0 01.359.852l-6.672 19.324a.75.75 0 01-1.406-.486l6.672-19.324a.75.75 0 011.047-.366zM5.25 6.375a2.625 2.625 0 110-5.25 2.625 2.625 0 010 5.25zm0 16.5a2.625 2.625 0 100-5.25 2.625 2.625 0 000 5.25z" clipRule="evenodd" />
-    </svg>
-);
-
-
-const HighlightItem: React.FC<{ icon: React.ReactNode; title: string; text: string }> = ({ icon, title, text }) => (
-    <div>
-        <HighlightIconWrapper>{icon}</HighlightIconWrapper>
-        <h3 className="font-bold text-lg text-white mb-2">{title}</h3>
-        <p className="text-gray-400 text-sm">{text}</p>
-    </div>
-);
-
+import { AppView, SiteConfig } from '../types';
+import { LinkedInIcon } from './icons/LinkedInIcon';
+import { InstagramIcon } from './icons/InstagramIcon';
+import { FacebookIcon } from './icons/FacebookIcon';
 
 interface FooterProps {
   onNav: (view: AppView) => void;
+  socialLinks: SiteConfig['socialLinks'];
 }
 
-const Footer: React.FC<FooterProps> = ({ onNav }) => {
-  return (
-    <footer className="bg-gray-800 text-white">
+const Footer: React.FC<FooterProps> = ({ onNav, socialLinks }) => {
+    
+    const FooterLink: React.FC<{view: AppView; label: string}> = ({ view, label }) => (
+        <li>
+            <a onClick={() => onNav(view)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">{label}</a>
+        </li>
+    );
+    
+    const SocialIcon: React.FC<{href: string; children: React.ReactNode}> = ({ href, children }) => (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
+           {children}
+        </a>
+    );
+
+    return (
+    <footer className="bg-[#13131A] text-white">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-12 border-b border-gray-700">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
-            <HighlightItem 
-              icon={<AiIcon />}
-              title="AI-Powered Matching"
-              text="Our intelligent system analyzes your needs to connect you with the perfect vendors, saving you time and effort."
-            />
-            <HighlightItem 
-              icon={<VerifiedIcon />}
-              title="Vetted & Verified"
-              text="Every vendor on our platform is thoroughly vetted for quality and reliability, so you can procure with absolute confidence."
-            />
-            <HighlightItem 
-              icon={<PercentIcon />}
-              title="Earn Commission"
-              text="Facilitate a deal by posting a requirement on our marketplace and you can earn up to a 10% commission."
-            />
-          </div>
-        </div>
-        <div className="py-8">
-            <div className="flex flex-col md:flex-row justify-between items-center text-center md:text-left">
-                <p className="text-gray-400">&copy; {new Date().getFullYear()} BANTConfirm. All rights reserved.</p>
-                <div className="flex space-x-6 mt-4 md:mt-0">
-                    <a onClick={() => onNav(AppView.ABOUT)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">About Us</a>
-                    <a onClick={() => onNav(AppView.FAQ)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">FAQ</a>
-                    <a onClick={() => onNav(AppView.CONTACT)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">Contact</a>
-                    <a onClick={() => onNav(AppView.BECOME_VENDOR)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">Become a Vendor</a>
+        <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+            {/* About Section */}
+            <div>
+                <h3 className="text-2xl font-bold mb-4 cursor-pointer" onClick={() => onNav(AppView.HOME)}>
+                    <span className="text-blue-500">BANT</span><span className="text-amber-400">Confirm</span>
+                </h3>
+                <p className="text-gray-400 mb-4 text-sm leading-relaxed">
+                   The intelligent B2B marketplace for AI-qualified IT and software leads, connecting businesses with top-tier vendors.
+                </p>
+                <div className="flex space-x-4">
+                    {socialLinks.linkedin && <SocialIcon href={socialLinks.linkedin}><LinkedInIcon /></SocialIcon>}
+                    {socialLinks.instagram && <SocialIcon href={socialLinks.instagram}><InstagramIcon /></SocialIcon>}
+                    {socialLinks.facebook && <SocialIcon href={socialLinks.facebook}><FacebookIcon /></SocialIcon>}
                 </div>
+            </div>
+            {/* Quick Links */}
+            <div>
+                <h3 className="text-lg font-semibold mb-4 text-white">Useful Link</h3>
+                <ul className="space-y-3 text-sm">
+                    <FooterLink view={AppView.ABOUT} label="About Us" />
+                    <FooterLink view={AppView.CONTACT} label="Contact" />
+                    <FooterLink view={AppView.FAQ} label="FAQ" />
+                    <FooterLink view={AppView.BECOME_VENDOR} label="Become a Vendor" />
+                </ul>
+            </div>
+             <div>
+                <h3 className="text-lg font-semibold mb-4 text-white">Our Community</h3>
+                <ul className="space-y-3 text-sm">
+                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Forum</a></li>
+                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Members</a></li>
+                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Case Studies</a></li>
+                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Events</a></li>
+                </ul>
+            </div>
+            {/* Newsletter */}
+            <div>
+                 <h3 className="text-lg font-semibold mb-4 text-white">Newsletter</h3>
+                 <p className="text-gray-400 mb-4 text-sm">Sign up for our newsletter to get the latest news and updates.</p>
+                 <form className="flex">
+                    <input type="email" placeholder="Your email" className="bg-[#2A2A32] text-white w-full py-2 px-4 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
+                    <button type="submit" className="bg-blue-600 text-white font-semibold px-4 rounded-r-lg hover:bg-blue-700 transition-colors">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086L2.279 16.76a.75.75 0 00.95.826l14.5-5.25a.75.75 0 000-1.352L3.105 2.289z"></path></svg>
+                    </button>
+                 </form>
+            </div>
+        </div>
+
+        <div className="py-6 border-t border-gray-700/50 flex flex-col sm:flex-row justify-between items-center text-sm">
+            <p className="text-gray-500">&copy; {new Date().getFullYear()} BANTConfirm. All rights reserved.</p>
+            <div className="flex space-x-6 mt-4 sm:mt-0">
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms of service</a>
+                <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy policy</a>
             </div>
         </div>
       </div>

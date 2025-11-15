@@ -11,7 +11,6 @@ const ApiKeyError: React.FC = () => (
         </svg>
       </div>
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Configuration Error</h2>
-      {/* FIX: Updated error message to reference API_KEY and provide generic instructions. */}
       <p className="text-gray-600 mb-6">
         The application requires an environment variable named <code className="bg-gray-200 text-red-700 font-mono p-1 rounded">API_KEY</code> to connect to the AI service, but it was not found.
       </p>

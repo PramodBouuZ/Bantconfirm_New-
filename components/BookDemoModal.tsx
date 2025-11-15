@@ -1,14 +1,16 @@
+
+
 import React, { useState } from 'react';
 import { CalendarIcon } from './icons/CalendarIcon';
 import { ClockIcon } from './icons/ClockIcon';
 
 interface BookDemoModalProps {
-    listingTitle: string;
+    productName: string;
     onClose: () => void;
     onConfirm: (details: { date: string; time: string }) => void;
 }
 
-const BookDemoModal: React.FC<BookDemoModalProps> = ({ listingTitle, onClose, onConfirm }) => {
+const BookDemoModal: React.FC<BookDemoModalProps> = ({ productName, onClose, onConfirm }) => {
     const [date, setDate] = useState('');
     const [time, setTime] = useState('');
 
@@ -24,7 +26,7 @@ const BookDemoModal: React.FC<BookDemoModalProps> = ({ listingTitle, onClose, on
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">Book a Demo</h2>
-                <p className="text-gray-600 mb-6">For requirement: <span className="font-semibold text-gray-800">"{listingTitle}"</span></p>
+                <p className="text-gray-600 mb-6">For product: <span className="font-semibold text-gray-800">"{productName}"</span></p>
                 <div className="space-y-4">
                     <div>
                         <label htmlFor="demo-date" className="block text-sm font-medium text-gray-700 mb-1">Preferred Date</label>

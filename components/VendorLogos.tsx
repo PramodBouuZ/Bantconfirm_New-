@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Vendor } from '../types';
 
@@ -25,7 +26,7 @@ const VendorLogos: React.FC<VendorLogosProps> = ({ vendors }) => {
       {vendors.map((vendor, index) => (
         <li key={index}>
           <img
-            className="max-h-12 w-auto object-contain filter grayscale hover:grayscale-0 transition-all duration-300"
+            className="max-h-12 w-auto object-contain"
             src={vendor.logoUrl}
             alt={vendor.name}
           />

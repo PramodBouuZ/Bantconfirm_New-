@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 
 export enum AppView {
@@ -18,10 +19,32 @@ export enum AppView {
   DASHBOARD = 'DASHBOARD',
   ADMIN_DASHBOARD = 'ADMIN_DASHBOARD',
   LEADS = 'LEADS',
-  PROMO_BANNER = 'PROMO_BANNER',
+  SITE_SETTINGS = 'SITE_SETTINGS',
   PRODUCTS = 'PRODUCTS',
   BECOME_VENDOR = 'BECOME_VENDOR',
   ADMIN_APPLICATIONS = 'ADMIN_APPLICATIONS',
+  PRODUCT_DETAIL = 'PRODUCT_DETAIL',
+  AI_LEAD_POSTER = 'AI_LEAD_POSTER',
+  LEAD_TRACKER = 'LEAD_TRACKER',
+  FORGOT_PASSWORD = 'FORGOT_PASSWORD',
+}
+
+export enum LeadPosterStage {
+  GREETING = 'GREETING',
+  DETAILS = 'DETAILS',
+  BUDGET = 'BUDGET',
+  AUTHORITY = 'AUTHORITY',
+  NEED = 'NEED',
+  TIMELINE = 'TIMELINE',
+  REVIEW = 'REVIEW',
+  COMPLETED = 'COMPLETED',
+}
+
+export interface DraftRequirement {
+  title: string;
+  description: string;
+  category: ListingCategory | '';
+  bantData: BantData;
 }
 
 export interface LeadDetails {
@@ -94,6 +117,7 @@ export interface RequirementListing {
   aiMatches: AIMatch[];
   status: ListingStatus;
   assignedVendorNames: string[];
+  bantData?: BantData;
 }
 
 export interface AIRecommendation {
@@ -120,6 +144,13 @@ export interface StoredConversation {
   timestamp: string;
 }
 
+export interface StoredLeadPosterConversation {
+  messages: ChatMessage[];
+  requirementData: DraftRequirement;
+  currentStage: LeadPosterStage;
+  timestamp: string;
+}
+
 export interface Notification {
   id: number;
   message: string;
@@ -129,6 +160,11 @@ export interface Notification {
 
 export type LeadStatus = 'New' | 'Assigned';
 
+export interface AssignmentHistoryEntry {
+  assignedAt: string; // ISO String
+  vendorNames: string[];
+}
+
 export interface QualifiedLead {
   id: number;
   leadDetails: LeadDetails;
@@ -136,6 +172,7 @@ export interface QualifiedLead {
   qualifiedAt: string; // ISO String
   status: LeadStatus;
   assignedVendorNames: string[];
+  assignmentHistory: AssignmentHistoryEntry[];
 }
 
 export interface PromotionalBannerData {
@@ -146,13 +183,31 @@ export interface PromotionalBannerData {
   link: string;
 }
 
+export interface SiteConfig {
+    promoBanner: PromotionalBannerData;
+    socialLinks: {
+        linkedin: string;
+        instagram: string;
+        facebook: string;
+    }
+}
+
 export interface Product {
   id: number;
   name: string;
   image: string; // Base64 or URL
   price: string;
+  oldPrice?: string;
+  priceUnit?: string;
   description: string;
   features: string[];
+  author?: string;
+  sales?: number;
+  rating?: {
+    rate: number;
+    count: number;
+  };
+  tags?: string[];
 }
 
 export interface VendorApplication {

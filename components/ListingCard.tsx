@@ -6,11 +6,12 @@ import { ShareIcon } from './icons/ShareIcon';
 import BookDemoModal from './BookDemoModal';
 
 interface ListingCardProps extends RequirementListing {
-  onPostNow: (listing: RequirementListing) => void;
+  onPostNow?: (listing: RequirementListing) => void;
+  showActions?: boolean;
 }
 
 const ListingCard: React.FC<ListingCardProps> = (props) => {
-  const { id, title, description, category, authorName, companyName, postedDate, aiMatches, onPostNow } = props;
+  const { id, title, description, category, authorName, companyName, postedDate, aiMatches, status, assignedVendorNames, onPostNow, showActions = true } = props;
   const [isCopied, setIsCopied] = useState(false);
   const [isBookingDemo, setIsBookingDemo] = useState(false);
 
@@ -19,13 +20,21 @@ const ListingCard: React.FC<ListingCardProps> = (props) => {
     Hardware: 'bg-purple-100 text-purple-800',
     Service: 'bg-amber-100 text-amber-800',
   };
+  
+  const statusColors: Record<RequirementListing['status'], string> = {
+    'Pending Validation': 'bg-amber-100 text-amber-800',
+    'Validated': 'bg-indigo-100 text-indigo-800',
+    'Assigned': 'bg-green-100 text-green-800',
+  };
 
   const handleBookDemo = () => {
     setIsBookingDemo(true);
   };
 
   const handlePostNow = () => {
-    onPostNow(props);
+    if (onPostNow) {
+        onPostNow(props);
+    }
   };
   
   const handleShare = () => {
@@ -50,7 +59,7 @@ const ListingCard: React.FC<ListingCardProps> = (props) => {
     <>
       {isBookingDemo && (
         <BookDemoModal
-          listingTitle={title}
+          productName={title}
           onClose={() => setIsBookingDemo(false)}
           onConfirm={(details) => {
             alert(`Demo booked for "${title}" on ${details.date} at ${details.time}. (This is a demonstration)`);
@@ -68,34 +77,51 @@ const ListingCard: React.FC<ListingCardProps> = (props) => {
           </div>
           <p className="text-gray-600 mb-4">{description}</p>
           
-          <div className="flex items-center gap-4">
-              <button 
-                  onClick={handleBookDemo}
-                  className="bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 transition-colors duration-300 text-sm"
-              >
-                  Book Demo
-              </button>
-              <button 
-                  onClick={handlePostNow}
-                  className="bg-amber-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-amber-600 transition-colors duration-300 text-sm"
-              >
-                  Post Now
-              </button>
-              <button 
-                  onClick={handleShare}
-                  className="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition-colors duration-300 text-sm flex items-center gap-2 disabled:cursor-not-allowed"
-                  disabled={isCopied}
-              >
-                  {isCopied ? (
-                      'Link Copied!'
-                  ) : (
-                      <>
-                          <ShareIcon />
-                          <span>Share</span>
-                      </>
-                  )}
-              </button>
-          </div>
+          {showActions ? (
+              <div className="flex items-center gap-4">
+                  <button 
+                      onClick={handleBookDemo}
+                      className="bg-indigo-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-indigo-700 transition-colors duration-300 text-sm"
+                  >
+                      Book Demo
+                  </button>
+                  <button 
+                      onClick={handlePostNow}
+                      className="bg-amber-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-amber-600 transition-colors duration-300 text-sm"
+                  >
+                      Post Now
+                  </button>
+                  <button 
+                      onClick={handleShare}
+                      className="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition-colors duration-300 text-sm flex items-center gap-2 disabled:cursor-not-allowed"
+                      disabled={isCopied}
+                  >
+                      {isCopied ? (
+                          'Link Copied!'
+                      ) : (
+                          <>
+                              <ShareIcon />
+                              <span>Share</span>
+                          </>
+                      )}
+                  </button>
+              </div>
+          ) : (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</h4>
+                  <span className={`mt-1 px-2 inline-flex text-sm leading-5 font-semibold rounded-full ${statusColors[status]}`}>
+                    {status}
+                  </span>
+                </div>
+                <div>
+                  <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Assigned Vendors</h4>
+                  <p className="text-sm font-medium text-gray-800 mt-1">{assignedVendorNames.join(', ') || 'Pending Assignment'}</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500 border-t border-gray-200 pt-4 mt-4">
             <p className="font-medium mb-2 sm:mb-0">

@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
@@ -6,10 +7,11 @@ import ProductCard from './ProductCard';
 interface ListingsMarketplaceProps {
   products: Product[];
   onPostRequirement: () => void;
-  onPostFromProduct: (product: Product) => void;
+  onSelectProduct: (product: Product) => void;
+  onBookDemo: (product: Product) => void;
 }
 
-const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onPostRequirement, onPostFromProduct }) => {
+const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onPostRequirement, onSelectProduct, onBookDemo }) => {
     const [searchTerm, setSearchTerm] = useState('');
     
     const filteredProducts = useMemo(() => {
@@ -56,7 +58,12 @@ const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onP
                     {filteredProducts.length > 0 ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                         {filteredProducts.map(product => (
-                            <ProductCard key={product.id} product={product} onPostNow={onPostFromProduct} />
+                            <ProductCard 
+                              key={product.id} 
+                              product={product} 
+                              onSelect={onSelectProduct}
+                              onBookDemo={onBookDemo} 
+                            />
                         ))}
                     </div>
                     ) : (

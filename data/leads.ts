@@ -18,6 +18,7 @@ export const LEADS_DATA: QualifiedLead[] = [
     qualifiedAt: '2024-07-28T11:45:00Z',
     status: 'New',
     assignedVendorNames: [],
+    assignmentHistory: [],
   },
   {
     id: 2,
@@ -36,6 +37,12 @@ export const LEADS_DATA: QualifiedLead[] = [
     qualifiedAt: '2024-07-27T16:20:00Z',
     status: 'Assigned',
     assignedVendorNames: ['SecureData Corp', 'CyberGuardians'],
+    assignmentHistory: [
+      {
+        assignedAt: '2024-07-27T17:00:00Z',
+        vendorNames: ['SecureData Corp', 'CyberGuardians']
+      }
+    ],
   },
   {
     id: 3,
@@ -54,5 +61,6 @@ export const LEADS_DATA: QualifiedLead[] = [
     qualifiedAt: '2024-07-26T09:10:00Z',
     status: 'New',
     assignedVendorNames: [],
+    assignmentHistory: [],
   },
 ];

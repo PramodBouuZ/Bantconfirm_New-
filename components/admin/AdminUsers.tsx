@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { User, RequirementListing } from '../../types';
 import { TrashIcon } from '../icons/TrashIcon';
 import { EditIcon } from '../icons/EditIcon';
@@ -17,10 +17,49 @@ interface AdminUsersProps {
 const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdate, onDelete }) => {
     const [editingUser, setEditingUser] = useState<User | 'new' | null>(null);
     const [viewingUser, setViewingUser] = useState<User | null>(null);
+    const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
 
     const getUserListings = (userName: string) => {
         return listings.filter(l => l.authorName === userName);
     };
+
+    const usersWithActivity = useMemo(() => {
+        return users.map(user => {
+            const userListings = listings.filter(l => l.authorName === user.name);
+            if (userListings.length === 0) {
+                return { ...user, lastActivity: null };
+            }
+            // Find the most recent postedDate
+            const latestListing = userListings.reduce((latest, current) => {
+                return new Date(latest.postedDate) > new Date(current.postedDate) ? latest : current;
+            });
+            return { ...user, lastActivity: new Date(latestListing.postedDate) };
+        });
+    }, [users, listings]);
+
+    const filteredUsers = useMemo(() => {
+        return usersWithActivity.filter(user => {
+            // Role filter
+            if (roleFilter === 'admin' && !user.isAdmin) return false;
+            if (roleFilter === 'user' && user.isAdmin) return false;
+
+            // Date filter - Robustly handle date parsing to avoid timezone issues.
+            const start = startDate ? new Date(`${startDate}T00:00:00`) : null;
+            const end = endDate ? new Date(`${endDate}T23:59:59.999`) : null;
+
+            // If a date range is set, users without activity should be filtered out
+            if ((start || end) && !user.lastActivity) return false;
+
+            if (start && user.lastActivity && user.lastActivity < start) return false;
+            if (end && user.lastActivity && user.lastActivity > end) return false;
+
+            return true;
+        });
+    }, [usersWithActivity, roleFilter, startDate, endDate]);
+
 
     const handleSave = (user: User | Omit<User, 'id'>) => {
         if ('id' in user) {
@@ -38,10 +77,10 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
     };
     
     const handleExportCSV = () => {
-        const headers = ['ID', 'Name', 'Email', 'Company', 'Mobile', 'Location', 'Role', 'Listings Count'];
+        const headers = ['ID', 'Name', 'Email', 'Company', 'Mobile', 'Location', 'Role', 'Listings Count', 'Last Activity'];
         const csvRows = [headers.join(',')];
 
-        users.forEach(user => {
+        filteredUsers.forEach(user => {
             const userListings = getUserListings(user.name);
             const row = [
                 user.id,
@@ -52,6 +91,7 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
                 `"${user.location || ''}"`,
                 user.isAdmin ? 'Admin' : 'User',
                 userListings.length,
+                `"${user.lastActivity ? user.lastActivity.toISOString() : 'N/A'}"`,
             ];
             csvRows.push(row.join(','));
         });
@@ -61,7 +101,7 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'bantconfirm_users.csv';
+        a.download = 'bantconfirm_users_export.csv';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -104,6 +144,27 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
                     </button>
                  </div>
             </div>
+
+            {/* Filters */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-4 p-4 bg-gray-50 rounded-lg border">
+                <div>
+                    <label htmlFor="role-filter" className="block text-sm font-medium text-gray-700 mb-1">Filter by Role</label>
+                    <select id="role-filter" value={roleFilter} onChange={e => setRoleFilter(e.target.value as any)} className="w-full sm:w-auto px-3 py-2 border border-gray-300 bg-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="all">All Roles</option>
+                        <option value="admin">Admin</option>
+                        <option value="user">User</option>
+                    </select>
+                </div>
+                <div>
+                    <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 mb-1">Activity After</label>
+                    <input type="date" id="start-date" value={startDate} onChange={e => setStartDate(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+                <div>
+                    <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">Activity Before</label>
+                    <input type="date" id="end-date" value={endDate} onChange={e => setEndDate(e.target.value)} className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+            </div>
+
             <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
@@ -111,12 +172,13 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Activity</th>
                             <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Listings</th>
                             <th className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                         </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
-                        {users.map((user) => {
+                        {filteredUsers.map((user) => {
                             const userListingsCount = getUserListings(user.name).length;
                             return (
                                 <tr key={user.id} className="hover:bg-gray-50">
@@ -134,6 +196,9 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
                                         ) : (
                                             <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">User</span>
                                         )}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {user.lastActivity ? user.lastActivity.toLocaleString() : 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-center">
                                         <button 
@@ -153,6 +218,11 @@ const AdminUsers: React.FC<AdminUsersProps> = ({ users, listings, onAdd, onUpdat
                         })}
                     </tbody>
                 </table>
+                 {filteredUsers.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                        <p>No users found matching the current filters.</p>
+                    </div>
+                )}
             </div>
         </div>
     );

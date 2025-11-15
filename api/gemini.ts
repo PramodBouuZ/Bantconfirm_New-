@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from '@google/genai';
 
 // --- START of necessary types (copied from types.ts) ---
@@ -11,12 +10,52 @@ enum BantStage {
   COMPLETED = 'COMPLETED',
 }
 
+enum LeadPosterStage {
+  GREETING = 'GREETING',
+  DETAILS = 'DETAILS',
+  BUDGET = 'BUDGET',
+  AUTHORITY = 'AUTHORITY',
+  NEED = 'NEED',
+  TIMELINE = 'TIMELINE',
+  REVIEW = 'REVIEW',
+  COMPLETED = 'COMPLETED',
+}
+
 interface LeadDetails {
   name: string;
   company: string;
   email: string;
   service: string;
 }
+
+interface User {
+  id: number;
+  name: string;
+  companyName?: string;
+  email: string;
+  mobile?: string;
+  location?: string;
+  isAdmin?: boolean;
+}
+
+interface BantData {
+  [BantStage.BUDGET]: string;
+  [BantStage.AUTHORITY]: string;
+  [BantStage.NEED]: string;
+  [BantStage.TIMELINE]: string;
+}
+
+type LeadStatus = 'New' | 'Assigned';
+
+interface QualifiedLead {
+  id: number;
+  leadDetails: LeadDetails;
+  bantData: BantData;
+  qualifiedAt: string; // ISO String
+  status: LeadStatus;
+  assignedVendorNames: string[];
+}
+
 
 interface Vendor {
   name:string;
@@ -78,6 +117,35 @@ const bantResponseSchema = {
   required: ['analysis', 'extractedData', 'isStageComplete', 'nextQuestion'],
 };
 
+const requirementGenerationSchema = {
+    type: Type.OBJECT,
+    properties: {
+        analysis: { type: Type.STRING, description: "Your brief, conversational analysis of the user's input." },
+        isStageComplete: { type: Type.BOOLEAN, description: "A boolean indicating if the goal for the current stage is met." },
+        nextQuestion: { type: Type.STRING, description: "The next question to ask the user." },
+        
+        extractedTitle: { type: Type.STRING, description: "The title for the requirement listing." },
+        extractedDescription: { type: Type.STRING, description: "The detailed description of the customer's need." },
+        extractedCategory: {
+            type: Type.STRING,
+            enum: ['Software', 'Hardware', 'Service', ''],
+            description: "The category of the requirement."
+        },
+        
+        extractedBantData: {
+            type: Type.OBJECT,
+            properties: {
+                [BantStage.BUDGET]: { type: Type.STRING },
+                [BantStage.AUTHORITY]: { type: Type.STRING },
+                [BantStage.NEED]: { type: Type.STRING },
+                [BantStage.TIMELINE]: { type: Type.STRING },
+            }
+        },
+    },
+    required: ['analysis', 'isStageComplete', 'nextQuestion'],
+};
+
+
 const solutionFinderSchema = {
     type: Type.OBJECT,
     properties: {
@@ -100,6 +168,11 @@ const vendorMatchingSchema = {
   }
 };
 
+const leadVendorMatchingSchema = {
+    type: Type.ARRAY,
+    items: { type: Type.STRING }
+};
+
 
 export default async function handler(req: any, res: any) {
     if (req.method !== 'POST') {
@@ -120,6 +193,57 @@ export default async function handler(req: any, res: any) {
                     model: 'gemini-2.5-flash',
                     contents: prompt,
                     config: { responseMimeType: 'application/json', responseSchema: bantResponseSchema },
+                });
+                
+                return res.status(200).json(JSON.parse(response.text));
+            }
+
+            case 'generateRequirement': {
+                const { userInput, stage, history, currentUser } = payload as { userInput: string; stage: LeadPosterStage; history: ChatMessage[]; currentUser: User; };
+                const conversationHistory = history.map(m => `${m.sender}: ${m.text}`).join('\n');
+                
+                const prompt = `You are an AI assistant for BANTConfirm, a B2B marketplace. Your goal is to help a user, '${currentUser.name}', post a new customer requirement by having a conversation. You need to gather requirement details (Title, Description, Category) and then qualify it with BANT parameters (Budget, Authority, Need, Timeline).
+
+                The conversation history is:
+                ${conversationHistory}
+                user: ${userInput}
+
+                The current stage of the conversation is: ${stage}.
+
+                **Your Task:**
+                Analyze the user's latest message ("${userInput}") based on the current stage and respond in the required JSON format.
+                
+                **Stage-by-stage Instructions:**
+
+                1.  **Stage 'GREETING' or 'DETAILS':**
+                    - Your goal is to gather the Title, Description, and a Category ('Software', 'Hardware', 'Service').
+                    - Analyze the user's input for any of these details.
+                    - If all three are gathered, set \`isStageComplete\` to \`true\`. Your \`nextQuestion\` should be about the budget (e.g., "Thanks! Now, let's qualify this lead. What is the customer's estimated budget?").
+                    - If information is missing, set \`isStageComplete\` to \`false\` and ask for the missing piece in \`nextQuestion\`. For example, "What would be a good title for this?".
+                    - Populate the \`extractedTitle\`, \`extractedDescription\`, and \`extractedCategory\` fields with any information you've gathered.
+
+                2.  **Stage 'BUDGET', 'AUTHORITY', 'NEED', 'TIMELINE':**
+                    - Your goal is to get a clear answer for the current BANT stage.
+                    - Analyze the user's input.
+                    - If you get a clear answer, set \`isStageComplete\` to \`true\`. Populate the corresponding field in \`extractedBantData\`. Formulate the \`nextQuestion\` for the *next* BANT stage (e.g., if stage is BUDGET, ask about AUTHORITY).
+                    - If the answer is unclear, set \`isStageComplete\` to \`false\` and ask a clarifying question in \`nextQuestion\`.
+                    
+                3.  **Stage 'REVIEW':**
+                    - The user is reviewing a summary you provided.
+                    - If their input is a confirmation ("confirm", "looks good", "post it"), set \`isStageComplete\` to \`true\`. Your \`analysis\` can be "Confirmation received." and \`nextQuestion\` can be empty.
+                    - If they want to change something, analyze their change request. Set \`isStageComplete\` to \`false\`. Update the relevant extracted fields and for \`nextQuestion\`, say "OK, I've updated that. Does everything else look correct?".
+
+                **General Rules:**
+                - \`analysis\`: Your brief, conversational thought process.
+                - \`isStageComplete\`: Boolean. \`true\` if the goal for the current stage is met.
+                - \`nextQuestion\`: The next thing you will say to the user.
+                - Always return the full JSON schema, but only populate the 'extracted' fields relevant to the current or previous stages. For BANT stages, only populate the field for that specific stage within \`extractedBantData\`.
+                `;
+
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                    config: { responseMimeType: 'application/json', responseSchema: requirementGenerationSchema },
                 });
                 
                 return res.status(200).json(JSON.parse(response.text));
@@ -149,6 +273,38 @@ export default async function handler(req: any, res: any) {
                     model: 'gemini-2.5-flash',
                     contents: prompt,
                     config: { responseMimeType: 'application/json', responseSchema: vendorMatchingSchema },
+                });
+
+                return res.status(200).json(JSON.parse(response.text));
+            }
+
+            case 'matchVendorsToLead': {
+                const { lead, vendors } = payload as { lead: QualifiedLead; vendors: Vendor[] };
+                const vendorList = vendors.map(v => `${v.name} (Specialties: ${v.specialties.join(', ')}; Description: ${v.description})`).join('; ');
+                const prompt = `You are an AI B2B matching engine for a marketplace called BANTConfirm. Your task is to analyze a qualified sales lead and find the most suitable vendors.
+
+                LEAD DETAILS:
+                - Service of Interest: "${lead.leadDetails.service}"
+                - BANT Summary:
+                    - Budget: "${lead.bantData.BUDGET}"
+                    - Authority: "${lead.bantData.AUTHORITY}"
+                    - Need: "${lead.bantData.NEED}"
+                    - Timeline: "${lead.bantData.TIMELINE}"
+
+                AVAILABLE VENDORS:
+                ${vendorList}
+
+                YOUR TASK:
+                1. Carefully review the lead's service interest and BANT summary.
+                2. Compare this information against the available vendors' specialties and descriptions.
+                3. Identify the top 2-3 vendors that are the best fit for this specific lead. Prioritize vendors whose specialties directly match the service of interest.
+                4. Return ONLY the names of the matched vendors in a JSON array of strings. For example: ["CloudNet Solutions", "SecureData Corp"].
+                5. If no vendors are a good match, return an empty array [].`;
+                
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash',
+                    contents: prompt,
+                    config: { responseMimeType: 'application/json', responseSchema: leadVendorMatchingSchema },
                 });
 
                 return res.status(200).json(JSON.parse(response.text));

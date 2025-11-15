@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { LeadDetails, ChatMessage, BantData, BantStage } from '../types';
 import useBantAssistant from '../hooks/useBantAssistant';
@@ -12,7 +13,6 @@ interface BantAssistantProps {
   onComplete: (data: BantData) => void;
 }
 
-// Fix: Moved Message and TypingIndicator components before BantAssistant to resolve reference errors.
 const Message: React.FC<{ message: ChatMessage }> = ({ message }) => {
   const isAI = message.sender === 'ai';
   return (
@@ -45,7 +45,6 @@ const BantAssistant: React.FC<BantAssistantProps> = ({ leadDetails, onComplete }
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // FIX: Compare currentStage to BantStage enum member, not a string literal.
     if (currentStage === BantStage.COMPLETED && bantData) {
       setTimeout(() => onComplete(bantData), 2000); // Give user time to read final message
     }
@@ -136,12 +135,10 @@ const BantAssistant: React.FC<BantAssistantProps> = ({ leadDetails, onComplete }
             placeholder="Type your answer here..."
             className="w-full p-3 pr-16 border border-gray-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500 resize-none"
             rows={1}
-            // FIX: Compare currentStage to BantStage enum member, not a string literal.
             disabled={isLoading || currentStage === BantStage.COMPLETED}
           />
           <button
             onClick={handleSend}
-            // FIX: Compare currentStage to BantStage enum member, not a string literal.
             disabled={isLoading || !userInput.trim() || currentStage === BantStage.COMPLETED}
             className="absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-full bg-indigo-600 text-white disabled:bg-gray-300 hover:bg-indigo-700 transition-colors"
           >

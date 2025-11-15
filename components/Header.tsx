@@ -1,7 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { AppView, User, Notification } from '../types';
-import { AdminIcon } from './icons/AdminIcon';
 import { BellIcon } from './icons/BellIcon';
 import NotificationsDropdown from './NotificationsDropdown';
 
@@ -12,6 +11,12 @@ interface HeaderProps {
   notifications: Notification[];
   onMarkNotificationsAsRead: () => void;
 }
+
+const UserCircleIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+);
 
 const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notifications, onMarkNotificationsAsRead }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -41,36 +46,35 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
   }, [notificationsRef]);
 
   return (
-    <header className="bg-white shadow-md sticky top-0 z-50">
+    <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
             <div 
-              className="text-2xl font-bold cursor-pointer"
-              onClick={() => onNav(currentUser?.isAdmin ? AppView.ADMIN_DASHBOARD : AppView.HOME)}
+              className="text-3xl font-bold cursor-pointer"
+              onClick={() => onNav(AppView.HOME)}
             >
-              <span className="text-indigo-600">BANT</span>
-              <span className="text-amber-500">Confirm</span>
+              <span className="text-blue-600">BANT</span><span className="text-amber-500">Confirm</span>
             </div>
+            <nav className="hidden lg:flex items-center space-x-8 ml-10">
+                <a onClick={() => onNav(AppView.HOME)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Home</a>
+                <a onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Products</a>
+                <a onClick={() => onNav(AppView.ABOUT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">About</a>
+                <a onClick={() => onNav(AppView.CONTACT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Contact</a>
+            </nav>
           </div>
-          <nav className="hidden md:flex items-center space-x-8">
-            <a onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="text-gray-600 hover:text-indigo-600 font-medium transition-colors cursor-pointer">Browse Listings</a>
-            <a onClick={() => onNav(currentUser ? AppView.POST_REQUIREMENT : AppView.SIGNUP)} className="text-gray-600 hover:text-indigo-600 font-medium transition-colors cursor-pointer">Post Requirement</a>
-            {currentUser?.isAdmin && (
-              <a onClick={() => onNav(AppView.ADMIN_DASHBOARD)} className="flex items-center text-amber-600 hover:text-amber-500 font-semibold transition-colors cursor-pointer">
-                <AdminIcon />
-                <span className="ml-2">Admin Panel</span>
-              </a>
-            )}
-          </nav>
+          
           <div className="flex items-center space-x-4">
             {currentUser ? (
               <>
+                 <button onClick={() => onNav(currentUser.isAdmin ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD)} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none transition-colors">
+                    <UserCircleIcon />
+                 </button>
                 {currentUser.isAdmin && (
                   <div className="relative" ref={notificationsRef}>
                     <button
                       onClick={handleToggleNotifications}
-                      className="relative p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-indigo-600 focus:outline-none transition-colors"
+                      className="relative p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-blue-600 focus:outline-none transition-colors"
                       aria-label={`Notifications (${unreadCount} unread)`}
                     >
                       <BellIcon />
@@ -86,7 +90,6 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
                     )}
                   </div>
                 )}
-                <span className="text-gray-600 hidden sm:block">Welcome, <span className="font-semibold">{currentUser.name.split(' ')[0]}</span>!</span>
                 <button
                   onClick={onLogout}
                   className="bg-gray-200 text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors duration-300"
@@ -98,15 +101,15 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
               <>
                 <button
                   onClick={() => onNav(AppView.LOGIN)}
-                  className="text-gray-600 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors duration-300"
+                  className="text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors duration-300"
                 >
                   Login
                 </button>
                 <button
                   onClick={() => onNav(AppView.SIGNUP)}
-                  className="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300"
+                  className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-sm"
                 >
-                  Sign Up
+                  Signup
                 </button>
               </>
             )}

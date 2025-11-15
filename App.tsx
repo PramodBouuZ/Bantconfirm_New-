@@ -1,17 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
-import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, PromotionalBannerData, Product, VendorApplication } from './types';
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
-import ServiceCard from './components/ServiceCard';
 import LeadForm from './components/LeadForm';
 import BantAssistant from './components/BantAssistant';
 import LeadConfirmation from './components/LeadConfirmation';
 import ServiceDetail from './components/ServiceDetail';
-import Hero from './components/Hero';
 import AISolutionFinder from './components/AISolutionFinder';
 import ListingsMarketplace from './components/ListingsMarketplace';
-import PostRequirementForm from './components/PostRequirementForm';
 import AboutPage from './components/AboutPage';
 import ContactPage from './components/ContactPage';
 import FAQPage from './components/FAQPage';
@@ -19,33 +17,39 @@ import Login from './components/Login';
 import Signup from './components/Signup';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/admin/AdminDashboard';
-import VendorLogos from './components/VendorLogos';
 import { VENDORS_DATA } from './data/vendors';
 import { SERVICES_DATA } from './data/services';
 import { LISTINGS } from './data/listings';
 import { USERS } from './data/users';
 import { LEADS_DATA } from './data/leads';
-import { matchVendorsToListing } from './services/geminiService';
-import CommissionBanner from './components/CommissionBanner';
+import { matchVendorsToListing, matchVendorsToLead } from './services/geminiService';
 import ToastNotification from './components/ToastNotification';
 import { PRODUCTS_DATA } from './data/products';
-import ProductCatalog from './components/ProductCatalog';
 import BecomeAVendorPage from './components/BecomeAVendorPage';
-import PromotionalBannerDisplay from './components/PromotionalBannerDisplay';
+import HomePage from './components/HomePage';
+import ProductDetail from './components/ProductDetail';
+import BookDemoModal from './components/BookDemoModal';
+import AILeadPoster from './components/AILeadPoster';
+import ForgotPassword from './components/ForgotPassword';
 
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [bookingProduct, setBookingProduct] = useState<Product | null>(null);
   const [leadDetails, setLeadDetails] = useState<LeadDetails | null>(null);
   const [bantData, setBantData] = useState<BantData | null>(null);
   const [initialServiceForForm, setInitialServiceForForm] = useState<string | undefined>();
   const [isMatching, setIsMatching] = useState(false);
   const [savedConversation, setSavedConversation] = useState<StoredConversation | null>(null);
+  const [savedLeadPosterConversation, setSavedLeadPosterConversation] = useState<StoredLeadPosterConversation | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [toast, setToast] = useState<Notification | null>(null);
   const [confirmationMessage, setConfirmationMessage] = useState<string | null>(null);
   const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
+  const [isLeadMatching, setIsLeadMatching] = useState(false);
+  const [lastMatchedVendors, setLastMatchedVendors] = useState<string[] | null>(null);
 
   // --- Persisted State ---
   const [listings, setListings] = useState<RequirementListing[]>(() => {
@@ -98,19 +102,26 @@ const App: React.FC = () => {
     }
   });
 
-  const [promoBanner, setPromoBanner] = useState<PromotionalBannerData>(() => {
-    const initialData = {
-      isActive: true,
-      image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=2070&auto=format&fit=crop',
-      title: 'Supercharge Your Business!',
-      text: 'Discover our new Enterprise Solutions package. Get a free consultation today.',
-      link: '#',
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
+    const initialData: SiteConfig = {
+      promoBanner: {
+        isActive: true,
+        image: 'https://images.unsplash.com/photo-1556742502-ec7c0e9f34b1?q=80&w=2070&auto=format&fit=crop',
+        title: 'Supercharge Your Business!',
+        text: 'Discover our new Enterprise Solutions package. Get a free consultation today.',
+        link: '#',
+      },
+      socialLinks: {
+        linkedin: 'https://www.linkedin.com',
+        instagram: 'https://www.instagram.com',
+        facebook: 'https://www.facebook.com',
+      }
     };
     try {
-      const saved = localStorage.getItem('bant_promo_banner');
+      const saved = localStorage.getItem('bant_site_config');
       return saved ? JSON.parse(saved) : initialData;
     } catch (error) {
-      console.error("Failed to load promo banner from localStorage", error);
+      console.error("Failed to load site config from localStorage", error);
       return initialData;
     }
   });
@@ -137,18 +148,42 @@ const App: React.FC = () => {
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
+  const productsWithLeadCounts = useMemo(() => {
+    return products.map(product => {
+        const leadCount = listings.filter(
+            listing => listing.title.includes(product.name)
+        ).length;
+        return { ...product, sales: leadCount };
+    });
+  }, [products, listings]);
+
+
   useEffect(() => {
     try {
-      const saved = localStorage.getItem('bant_conversation');
-      if (saved) {
-        const parsed = JSON.parse(saved) as StoredConversation;
-        // Simple validation
+      // Load BANT assistant conversation
+      const savedBantConv = localStorage.getItem('bant_conversation');
+      if (savedBantConv) {
+        const parsed = JSON.parse(savedBantConv) as StoredConversation;
         if (parsed.leadDetails && parsed.messages) {
           setSavedConversation(parsed);
         }
       }
+      
+      // Load Lead Poster conversation
+      const savedLeadPosterConv = localStorage.getItem('bant_lead_poster_conversation');
+      if (savedLeadPosterConv) {
+        const parsed = JSON.parse(savedLeadPosterConv) as StoredLeadPosterConversation;
+        if (parsed.messages && parsed.currentStage) {
+          setSavedLeadPosterConversation(parsed);
+        } else {
+           setSavedLeadPosterConversation(null); // Clear invalid data
+        }
+      } else {
+        setSavedLeadPosterConversation(null); // Clear if no data
+      }
+
     } catch (error) {
-      console.error("Failed to load conversation from localStorage", error);
+      console.error("Failed to load a conversation from localStorage", error);
     }
   }, [currentView]); // Reload when view changes, e.g., after login.
 
@@ -174,7 +209,7 @@ const App: React.FC = () => {
   useEffect(() => { try { localStorage.setItem('bant_services', JSON.stringify(services)); } catch (e) { console.error(e); } }, [services]);
   useEffect(() => { try { localStorage.setItem('bant_vendors', JSON.stringify(vendors)); } catch (e) { console.error(e); } }, [vendors]);
   useEffect(() => { try { localStorage.setItem('bant_qualified_leads', JSON.stringify(qualifiedLeads)); } catch (e) { console.error(e); } }, [qualifiedLeads]);
-  useEffect(() => { try { localStorage.setItem('bant_promo_banner', JSON.stringify(promoBanner)); } catch (e) { console.error(e); } }, [promoBanner]);
+  useEffect(() => { try { localStorage.setItem('bant_site_config', JSON.stringify(siteConfig)); } catch (e) { console.error(e); } }, [siteConfig]);
   useEffect(() => { try { localStorage.setItem('bant_products', JSON.stringify(products)); } catch (e) { console.error(e); } }, [products]);
   useEffect(() => { try { localStorage.setItem('bant_vendor_applications', JSON.stringify(vendorApplications)); } catch (e) { console.error(e); } }, [vendorApplications]);
 
@@ -182,6 +217,7 @@ const App: React.FC = () => {
   const handleNav = (view: AppView) => {
     if (view === AppView.HOME) {
       setSelectedService(null);
+      setSelectedProduct(null);
     }
     setConfirmationMessage(null); // Clear confirmation on navigation
     setCurrentView(view);
@@ -197,6 +233,19 @@ const App: React.FC = () => {
     setCurrentView(AppView.SERVICE_DETAIL);
   };
 
+  const handleSelectProduct = (product: Product) => {
+    setSelectedProduct(product);
+    setCurrentView(AppView.PRODUCT_DETAIL);
+  };
+
+  const handleBookDemo = (product: Product) => {
+    setBookingProduct(product);
+  };
+
+  const handleCloseBookDemo = () => {
+    setBookingProduct(null);
+  };
+
   const handleLeadSubmit = (details: LeadDetails) => {
     localStorage.removeItem('bant_conversation');
     setSavedConversation(null);
@@ -204,24 +253,52 @@ const App: React.FC = () => {
     setCurrentView(AppView.BANT_ASSISTANT);
   };
 
-  const handleBantComplete = (data: BantData) => {
+  const handleBantComplete = async (data: BantData) => {
     if (leadDetails) {
-        const newLead: QualifiedLead = {
-            id: qualifiedLeads.length > 0 ? Math.max(...qualifiedLeads.map(l => l.id)) + 1 : 1,
-            leadDetails: leadDetails,
-            bantData: data,
-            qualifiedAt: new Date().toISOString(),
-            status: 'New',
-            assignedVendorNames: [],
-        };
-        setQualifiedLeads(prev => [newLead, ...prev]);
-    }
+      const newLead: QualifiedLead = {
+        id: qualifiedLeads.length > 0 ? Math.max(...qualifiedLeads.map(l => l.id)) + 1 : 1,
+        leadDetails: leadDetails,
+        bantData: data,
+        qualifiedAt: new Date().toISOString(),
+        status: 'New',
+        assignedVendorNames: [],
+        assignmentHistory: [],
+      };
+      
+      setBantData(data);
+      setCurrentView(AppView.CONFIRMATION);
+      setIsLeadMatching(true);
+      setLastMatchedVendors(null);
+      
+      setQualifiedLeads(prev => [newLead, ...prev]);
 
-    setBantData(data);
-    setCurrentView(AppView.CONFIRMATION);
+      // Trigger AI matching in the background
+      const matchedVendorNames = await matchVendorsToLead(newLead, vendors);
+      
+      // Update the lead with AI matches
+      setQualifiedLeads(prev => prev.map(l => {
+        if (l.id === newLead.id) {
+          const newHistoryEntry: AssignmentHistoryEntry = {
+            assignedAt: new Date().toISOString(),
+            vendorNames: matchedVendorNames,
+          };
+          return {
+            ...l,
+            status: 'Assigned',
+            assignedVendorNames: matchedVendorNames,
+            assignmentHistory: [newHistoryEntry],
+          };
+        }
+        return l;
+      }));
+      
+      setLastMatchedVendors(matchedVendorNames);
+      setIsLeadMatching(false);
+    }
+    
     localStorage.removeItem('bant_conversation');
     setSavedConversation(null);
-};
+  };
 
   const handleStartOver = () => {
     setLeadDetails(null);
@@ -239,7 +316,16 @@ const App: React.FC = () => {
     }
   };
   
+  const handleContinueLeadPosterConversation = () => {
+    if (savedLeadPosterConversation) {
+      handleNav(AppView.AI_LEAD_POSTER);
+    }
+  };
+
   const handleRequirementPosted = async (newListingData: Omit<RequirementListing, 'id' | 'postedDate' | 'aiMatches' | 'status' | 'assignedVendorNames'>) => {
+    localStorage.removeItem('bant_lead_poster_conversation');
+    setSavedLeadPosterConversation(null);
+
     const newListing: RequirementListing = {
       ...newListingData,
       id: listings.length > 0 ? Math.max(...listings.map(l => l.id)) + 1 : 1,
@@ -325,6 +411,8 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     setCurrentView(AppView.HOME);
+    localStorage.removeItem('bant_lead_poster_conversation');
+    setSavedLeadPosterConversation(null);
   };
 
   const handleAddService = (service: Service) => {
@@ -383,15 +471,26 @@ const App: React.FC = () => {
   };
 
   const handleAssignVendorsToLead = (leadId: number, vendorNames: string[]) => {
-    setQualifiedLeads(prev => prev.map(lead =>
-      lead.id === leadId
-        ? { ...lead, status: 'Assigned', assignedVendorNames: vendorNames }
-        : lead
-    ));
+    setQualifiedLeads(prev => prev.map(lead => {
+      if (lead.id === leadId) {
+        const newHistoryEntry: AssignmentHistoryEntry = {
+          assignedAt: new Date().toISOString(),
+          vendorNames: vendorNames,
+        };
+        const updatedHistory = [...lead.assignmentHistory, newHistoryEntry];
+        return {
+          ...lead,
+          status: 'Assigned',
+          assignedVendorNames: vendorNames, // Keep this for current display logic
+          assignmentHistory: updatedHistory,
+        };
+      }
+      return lead;
+    }));
   };
 
-  const handleUpdatePromoBanner = (data: PromotionalBannerData) => {
-    setPromoBanner(data);
+  const handleUpdateSiteConfig = (data: SiteConfig) => {
+    setSiteConfig(data);
   };
   
   const handleAddProduct = (product: Omit<Product, 'id'>) => {
@@ -458,42 +557,51 @@ const App: React.FC = () => {
       viewToRender = currentUser.isAdmin ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD;
     }
 
+    const PageWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        {children}
+      </div>
+    );
+
     switch (viewToRender) {
       case AppView.HOME:
-        return <Home 
+        return <HomePage 
           services={services}
+          products={productsWithLeadCounts}
           vendors={vendors}
-          products={products}
-          promoBanner={promoBanner}
-          onFindSolution={() => handleNav(AppView.AI_SOLUTION_FINDER)} 
-          onPostRequirement={() => handleNav(currentUser ? AppView.POST_REQUIREMENT : AppView.SIGNUP)}
-          onSelectService={handleSelectService}
-          onPostNow={handlePostFromProduct}
+          onGetQuote={handleGetQuote}
+          onPostRequirement={() => handleNav(currentUser ? AppView.AI_LEAD_POSTER : AppView.SIGNUP)}
+          onSelectProduct={handleSelectProduct}
+          onBookDemo={handleBookDemo}
+          onNav={handleNav}
         />;
       case AppView.DASHBOARD:
         if (!currentUser) {
           setCurrentView(AppView.LOGIN);
           return null;
         }
-        return <Dashboard 
+        return <PageWrapper><Dashboard 
           user={currentUser} 
           userListings={listings.filter(l => l.authorName === currentUser.name)}
-          products={products}
+          products={productsWithLeadCounts}
           isMatching={isMatching}
-          onPostRequirement={() => handleNav(AppView.POST_REQUIREMENT)}
+          onPostRequirement={() => handleNav(AppView.AI_LEAD_POSTER)}
           savedConversation={savedConversation}
           onContinueConversation={handleContinueConversation}
+          savedLeadPosterConversation={savedLeadPosterConversation}
+          onContinueLeadPosterConversation={handleContinueLeadPosterConversation}
           confirmationMessage={confirmationMessage}
           onClearConfirmation={() => setConfirmationMessage(null)}
-          onPostFromProduct={handlePostFromProduct}
-          promoBanner={promoBanner}
-        />
+          promoBanner={siteConfig.promoBanner}
+          onSelectProduct={handleSelectProduct}
+          onBookDemo={handleBookDemo}
+        /></PageWrapper>
       case AppView.ADMIN_DASHBOARD:
          if (!currentUser || !currentUser.isAdmin) {
           setCurrentView(AppView.LOGIN);
           return null;
         }
-        return <AdminDashboard 
+        return <PageWrapper><AdminDashboard 
             user={currentUser}
             stats={{
               users: users.length,
@@ -506,8 +614,8 @@ const App: React.FC = () => {
             users={users}
             services={services}
             leads={qualifiedLeads}
-            promoBanner={promoBanner}
-            products={products}
+            siteConfig={siteConfig}
+            products={productsWithLeadCounts}
             vendorApplications={vendorApplications}
             onDeleteListing={handleDeleteListing}
             onAddListing={handleAddListing}
@@ -524,11 +632,11 @@ const App: React.FC = () => {
             onUpdateUser={handleUpdateUser}
             onDeleteUser={handleDeleteUser}
             onAssignVendorsToLead={handleAssignVendorsToLead}
-            onUpdatePromoBanner={handleUpdatePromoBanner}
+            onUpdateSiteConfig={handleUpdateSiteConfig}
             onAddProduct={handleAddProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}
-        />
+        /></PageWrapper>
       case AppView.SERVICE_DETAIL: {
         if (!selectedService) {
           setCurrentView(homeView);
@@ -537,57 +645,81 @@ const App: React.FC = () => {
         const relevantVendors = vendors.filter(vendor => 
           vendor.specialties.includes(selectedService.name)
         );
-        return <ServiceDetail 
+        return <PageWrapper><ServiceDetail 
           service={selectedService} 
           vendors={relevantVendors}
-          promoBanner={promoBanner}
+          promoBanner={siteConfig.promoBanner}
           onBack={() => {
             setSelectedService(null);
             setCurrentView(homeView);
           }}
           onGetQuote={() => handleGetQuote(selectedService.name)}
-        />;
+        /></PageWrapper>;
+      }
+      case AppView.PRODUCT_DETAIL: {
+        if (!selectedProduct) {
+          setCurrentView(homeView);
+          return null;
+        }
+        return <PageWrapper><ProductDetail 
+          product={selectedProduct}
+          onBack={() => {
+            setSelectedProduct(null);
+            setCurrentView(AppView.LISTINGS_MARKETPLACE);
+          }}
+          onBookDemo={handleBookDemo}
+          onPostRequirement={handlePostFromProduct}
+        /></PageWrapper>
       }
       case AppView.LEAD_FORM:
-        return <LeadForm onSubmit={handleLeadSubmit} initialService={initialServiceForForm} services={services} />;
+        return <PageWrapper><LeadForm onSubmit={handleLeadSubmit} initialService={initialServiceForForm} services={services} /></PageWrapper>;
       case AppView.BANT_ASSISTANT:
         if (!leadDetails) {
           setCurrentView(AppView.LEAD_FORM);
           return null;
         }
-        return <BantAssistant leadDetails={leadDetails} onComplete={handleBantComplete} />;
+        return <PageWrapper><BantAssistant leadDetails={leadDetails} onComplete={handleBantComplete} /></PageWrapper>;
       case AppView.CONFIRMATION:
         if (!bantData || !leadDetails) {
           setCurrentView(AppView.LEAD_FORM);
           return null;
         }
-        return <LeadConfirmation leadDetails={leadDetails} bantData={bantData} onStartOver={handleStartOver} />;
+        return <PageWrapper><LeadConfirmation 
+                 leadDetails={leadDetails} 
+                 bantData={bantData} 
+                 onStartOver={handleStartOver} 
+                 isMatching={isLeadMatching}
+                 matchedVendors={lastMatchedVendors}
+               /></PageWrapper>;
       case AppView.AI_SOLUTION_FINDER:
-        return <AISolutionFinder onSelectService={handleSelectService} services={services} vendors={vendors} />;
+        return <PageWrapper><AISolutionFinder onSelectService={handleSelectService} services={services} vendors={vendors} /></PageWrapper>;
       case AppView.LISTINGS_MARKETPLACE:
-        return <ListingsMarketplace 
-                 products={products} 
-                 onPostRequirement={() => handleNav(currentUser ? AppView.POST_REQUIREMENT : AppView.SIGNUP)} 
-                 onPostFromProduct={handlePostFromProduct}
-               />;
-       case AppView.POST_REQUIREMENT:
+        return <PageWrapper><ListingsMarketplace 
+                 products={productsWithLeadCounts} 
+                 onPostRequirement={() => handleNav(currentUser ? AppView.AI_LEAD_POSTER : AppView.SIGNUP)} 
+                 onSelectProduct={handleSelectProduct}
+                 onBookDemo={handleBookDemo}
+               /></PageWrapper>;
+       case AppView.AI_LEAD_POSTER:
         if (!currentUser) {
           setCurrentView(AppView.LOGIN);
           return null;
         }
-        return <PostRequirementForm onPost={handleRequirementPosted} currentUser={currentUser} />;
+        return <PageWrapper><AILeadPoster onComplete={handleRequirementPosted} currentUser={currentUser} /></PageWrapper>;
       case AppView.ABOUT:
-        return <AboutPage />;
+        return <PageWrapper><AboutPage /></PageWrapper>;
       case AppView.CONTACT:
-        return <ContactPage />;
+        return <PageWrapper><ContactPage /></PageWrapper>;
       case AppView.FAQ:
-        return <FAQPage />;
+        return <PageWrapper><FAQPage /></PageWrapper>;
       case AppView.LOGIN:
-        return <Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} users={users} />;
+        return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} /></PageWrapper>;
       case AppView.SIGNUP:
-        return <Signup onSignup={handleSignup} onSwitchToLogin={() => handleNav(AppView.LOGIN)} />;
+        return <PageWrapper><Signup onSignup={handleSignup} onSwitchToLogin={() => handleNav(AppView.LOGIN)} /></PageWrapper>;
+      case AppView.FORGOT_PASSWORD:
+        return <PageWrapper><ForgotPassword onBackToLogin={() => handleNav(AppView.LOGIN)} /></PageWrapper>;
       case AppView.BECOME_VENDOR:
-        return <BecomeAVendorPage onSubmit={handleVendorApplicationSubmit} />;
+        return <PageWrapper><BecomeAVendorPage onSubmit={handleVendorApplicationSubmit} /></PageWrapper>;
       default:
         setCurrentView(homeView);
         return null;
@@ -595,11 +727,21 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen flex flex-col font-sans text-gray-800">
+    <div className="bg-white min-h-screen flex flex-col text-gray-800" style={{fontFamily: "'Inter', sans-serif"}}>
       {toast && currentUser?.isAdmin && (
         <ToastNotification 
           notification={toast}
           onClose={() => setToast(null)}
+        />
+      )}
+      {bookingProduct && (
+        <BookDemoModal
+          productName={bookingProduct.name}
+          onClose={handleCloseBookDemo}
+          onConfirm={(details) => {
+            alert(`Demo booked for "${bookingProduct.name}" on ${details.date} at ${details.time}. (This is a demonstration)`);
+            handleCloseBookDemo();
+          }}
         />
       )}
       <Header 
@@ -610,52 +752,11 @@ const App: React.FC = () => {
         onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
       />
       <main className="flex-grow">
-        {(currentView === AppView.HOME || currentView === AppView.DASHBOARD) ? renderContent() : (
-           <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-             {renderContent()}
-           </div>
-        )}
+        {renderContent()}
       </main>
-      <Footer onNav={handleNav} />
+      <Footer onNav={handleNav} socialLinks={siteConfig.socialLinks} />
     </div>
   );
 };
-
-interface HomeProps {
-  services: Service[];
-  vendors: Vendor[];
-  products: Product[];
-  promoBanner: PromotionalBannerData;
-  onFindSolution: () => void;
-  onPostRequirement: () => void;
-  onSelectService: (service: Service) => void;
-  onPostNow: (product: Product) => void;
-}
-
-const Home: React.FC<HomeProps> = ({ services, vendors, products, promoBanner, onFindSolution, onPostRequirement, onSelectService, onPostNow }) => (
-  <div>
-    <Hero onPrimaryAction={onFindSolution} onSecondaryAction={onPostRequirement} />
-    <CommissionBanner />
-    <section id="services" className="py-16 bg-white">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-3xl font-bold text-center mb-2 text-gray-900">Explore Top IT & Software Services</h2>
-            <p className="text-center text-gray-600 mb-10 max-w-2xl mx-auto">Browse our curated categories to find the perfect solution for your business challenges.</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                {services.map((service) => (
-                <ServiceCard key={service.name} {...service} onSelect={() => onSelectService(service)} />
-                ))}
-            </div>
-        </div>
-    </section>
-    <ProductCatalog products={products} onPostNow={onPostNow} />
-    <section className="py-16 bg-gray-50">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-center mb-10 text-gray-900">Special Offers</h2>
-          <PromotionalBannerDisplay banner={promoBanner} />
-      </div>
-    </section>
-    <VendorLogos vendors={vendors} />
-  </div>
-);
 
 export default App;

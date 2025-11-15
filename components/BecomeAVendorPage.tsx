@@ -64,7 +64,7 @@ const BecomeAVendorPage: React.FC<BecomeAVendorPageProps> = ({ onSubmit }) => {
   return (
     <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-lg border border-gray-200">
       <h2 className="text-3xl font-bold text-gray-900 mb-2 text-center">Become a Vendor</h2>
-      <p className="text-gray-600 mb-8 text-center">Join our curated marketplace of top IT & Software vendors.</p>
+      <p className="text-gray-600 mb-8 text-center">Join our curated marketplace and receive AI-qualified leads for your IT & Software solutions.</p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <InputField label="Contact Name" id="name" value={name} onChange={setName} error={errors.name} />
@@ -91,7 +91,7 @@ const BecomeAVendorPage: React.FC<BecomeAVendorPageProps> = ({ onSubmit }) => {
           </div>
           {errors.logo && <p className="text-red-500 text-xs mt-1">{errors.logo}</p>}
         </div>
-        <button type="submit" className="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-colors duration-300">
+        <button type="submit" className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300">
           Submit Application
         </button>
       </form>
