@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
@@ -632,6 +633,10 @@ const App: React.FC = () => {
     });
     handleSendWhatsApp(siteConfig.whatsappConfig?.adminMobile || '', `Lead for "${lead.leadDetails.service}" assigned to: ${vendorNames.join(', ')}`);
   };
+  
+  const handleDeleteQualifiedLead = (leadId: number) => {
+    setQualifiedLeads(prev => prev.filter(l => l.id !== leadId));
+  };
 
   const handleUpdateSiteConfig = (data: SiteConfig) => {
     setSiteConfig(data);
@@ -773,7 +778,7 @@ const App: React.FC = () => {
           return null;
         }
         return <AdminDashboard 
-            user={currentTeamMember}
+            currentUser={currentTeamMember}
             stats={{
               users: users.length,
               vendors: vendors.length,
@@ -805,6 +810,7 @@ const App: React.FC = () => {
             onUpdateUser={handleUpdateUser}
             onDeleteUser={handleDeleteUser}
             onAssignVendorsToLead={handleAssignVendorsToLead}
+            onDeleteLead={handleDeleteQualifiedLead}
             onUpdateSiteConfig={handleUpdateSiteConfig}
             onTestWhatsApp={handleTestWhatsApp}
             onAddProduct={handleAddProduct}

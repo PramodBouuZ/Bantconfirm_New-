@@ -1,10 +1,15 @@
 
 
+
+
 import React, { useState, useMemo } from 'react';
-import { QualifiedLead, RequirementListing, Vendor, BantStage, User } from '../../types';
+import { QualifiedLead, RequirementListing, Vendor, BantStage, User, TeamMember } from '../../types';
 import { AssignIcon } from '../icons/AssignIcon';
 import { DownloadIcon } from '../icons/DownloadIcon';
 import AssignVendorModal from './AssignVendorModal';
+import ListingForm from './ListingForm';
+import { EditIcon } from '../icons/EditIcon';
+import { TrashIcon } from '../icons/TrashIcon';
 
 // A unified type to handle both leads and listings
 type ManagedLead = (QualifiedLead & { type: 'lead' }) | (RequirementListing & { type: 'listing' });
@@ -14,7 +19,9 @@ interface AdminManageLeadsProps {
     listings: RequirementListing[];
     vendors: Vendor[];
     users: User[];
+    currentUser: TeamMember;
     onAssignLead: (leadId: number, vendorNames: string[]) => void;
+    onDeleteLead: (leadId: number) => void;
     onAssignListing: (listingId: number, vendorNames: string[]) => void;
     onValidateListing: (listingId: number) => void;
     onDeleteListing: (listingId: number) => void;
@@ -23,9 +30,14 @@ interface AdminManageLeadsProps {
 }
 
 const AdminManageLeads: React.FC<AdminManageLeadsProps> = (props) => {
-    const { qualifiedLeads, listings, vendors, users, onAssignLead, onAssignListing, onValidateListing } = props;
+    const { 
+        qualifiedLeads, listings, vendors, users, currentUser,
+        onAssignLead, onDeleteLead, onAssignListing, onValidateListing,
+        onAddListing, onUpdateListing, onDeleteListing
+    } = props;
 
     const [assigningItem, setAssigningItem] = useState<ManagedLead | null>(null);
+    const [editingListing, setEditingListing] = useState<RequirementListing | 'new' | null>(null);
     const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
     const [statusFilter, setStatusFilter] = useState<string>('all');
     const [startDate, setStartDate] = useState('');
@@ -93,6 +105,15 @@ const AdminManageLeads: React.FC<AdminManageLeadsProps> = (props) => {
         setAssigningItem(null);
     };
 
+    const handleSaveListing = (listingData: RequirementListing | Omit<RequirementListing, 'id' | 'postedDate' | 'aiMatches' | 'status' | 'assignedVendorNames'>) => {
+        if ('id' in listingData) {
+            onUpdateListing(listingData);
+        } else {
+            onAddListing(listingData);
+        }
+        setEditingListing(null);
+    };
+
     const toggleExpand = (item: ManagedLead) => {
         const itemId = `${item.type}-${item.id}`;
         setExpandedItemId(prevId => (prevId === itemId ? null : itemId));
@@ -155,12 +176,25 @@ const AdminManageLeads: React.FC<AdminManageLeadsProps> = (props) => {
                     onSave={(id, vendorNames) => handleSaveAssignment(id, assigningItem.type, vendorNames)}
                 />
             )}
+            {editingListing && (
+                <ListingForm
+                    listing={editingListing === 'new' ? null : editingListing}
+                    currentUser={currentUser}
+                    onSave={handleSaveListing}
+                    onCancel={() => setEditingListing(null)}
+                />
+            )}
              <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
                  <h1 className="text-2xl font-bold text-gray-900">Manage Leads &amp; Requirements</h1>
-                 <button onClick={handleExportCSV} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center">
-                    <DownloadIcon />
-                    <span className="ml-2">Export CSV</span>
-                </button>
+                 <div className="flex gap-2">
+                    <button onClick={handleExportCSV} className="bg-green-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-green-700 transition-colors flex items-center">
+                        <DownloadIcon />
+                        <span className="ml-2">Export CSV</span>
+                    </button>
+                    <button onClick={() => setEditingListing('new')} className="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
+                        Add Requirement
+                    </button>
+                 </div>
             </div>
 
             {/* Filters */}
@@ -259,9 +293,18 @@ const AdminManageLeads: React.FC<AdminManageLeadsProps> = (props) => {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                            {item.type === 'listing' && item.status === 'Pending Validation' && (
-                                                <button onClick={(e) => { e.stopPropagation(); onValidateListing(item.id); }} className="text-green-600 hover:text-green-900 font-semibold">Validate</button>
+                                             {item.type === 'listing' && (
+                                                <>
+                                                    {item.status === 'Pending Validation' && (
+                                                        <button onClick={(e) => { e.stopPropagation(); onValidateListing(item.id); }} className="text-green-600 hover:text-green-900 font-semibold">Validate</button>
+                                                    )}
+                                                    <button onClick={(e) => { e.stopPropagation(); setEditingListing(item); }} className="p-1 rounded-full text-indigo-600 hover:bg-indigo-100"><EditIcon /></button>
+                                                    <button onClick={(e) => { e.stopPropagation(); onDeleteListing(item.id); }} className="p-1 rounded-full text-red-600 hover:bg-red-100"><TrashIcon /></button>
+                                                </>
                                             )}
+                                             {item.type === 'lead' && (
+                                                 <button onClick={(e) => { e.stopPropagation(); onDeleteLead(item.id); }} className="p-1 rounded-full text-red-600 hover:bg-red-100"><TrashIcon /></button>
+                                             )}
                                             <button onClick={(e) => { e.stopPropagation(); setAssigningItem(item); }} className="text-indigo-600 hover:text-indigo-900 font-semibold inline-flex items-center gap-1">
                                                 <AssignIcon /> {item.status === 'Assigned' ? 'Re-assign' : 'Assign'}
                                             </button>
@@ -274,15 +317,16 @@ const AdminManageLeads: React.FC<AdminManageLeadsProps> = (props) => {
                                                     <div>
                                                         <h4 className="text-md font-semibold text-gray-800 mb-2">{item.type === 'lead' ? 'BANT Summary' : 'Requirement Details'}</h4>
                                                         <div className="space-y-2 text-sm">
-                                                            {item.type === 'lead' ? (
+                                                            {item.bantData ? (
                                                                 <>
                                                                     <InfoDetail label="Budget" value={item.bantData[BantStage.BUDGET]} />
                                                                     <InfoDetail label="Authority" value={item.bantData[BantStage.AUTHORITY]} />
                                                                     <InfoDetail label="Need" value={item.bantData[BantStage.NEED]} />
                                                                     <InfoDetail label="Timeline" value={item.bantData[BantStage.TIMELINE]} />
                                                                 </>
-                                                            ) : (
-                                                                <p className="text-gray-800 whitespace-pre-wrap">{item.description}</p>
+                                                            ) : null}
+                                                            {item.type === 'listing' && (
+                                                                <p className="text-gray-800 whitespace-pre-wrap pt-2">{item.description}</p>
                                                             )}
                                                         </div>
                                                     </div>
