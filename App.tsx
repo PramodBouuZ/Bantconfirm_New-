@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
@@ -508,13 +507,14 @@ const App: React.FC = () => {
 
   const handleLogin = (user: User | TeamMember) => {
     if ('role' in user) { // It's a TeamMember
-        setCurrentTeamMember(user);
-        setCurrentUser(null);
+      setCurrentTeamMember(user);
+      setCurrentUser(null);
+      setCurrentView(AppView.ADMIN_DASHBOARD);
     } else { // It's a User
-        setCurrentUser(user);
-        setCurrentTeamMember(null);
+      setCurrentUser(user);
+      setCurrentTeamMember(null);
+      setCurrentView(AppView.DASHBOARD);
     }
-    setCurrentView(AppView.ADMIN_DASHBOARD); // Both go to admin dashboard view wrapper
   };
 
   const handleSignup = (user: Omit<User, 'id'>) => {
@@ -724,9 +724,9 @@ const App: React.FC = () => {
 
   const renderContent = () => {
     const isLoggedIn = currentUser || currentTeamMember;
-    const defaultHomeView = isLoggedIn ? AppView.DASHBOARD : AppView.HOME;
 
     let viewToRender = currentView;
+    // This logic handles redirection for logged-in users trying to access the homepage.
     if (currentView === AppView.HOME && isLoggedIn) {
       viewToRender = currentTeamMember ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD;
     }
@@ -753,8 +753,8 @@ const App: React.FC = () => {
         />;
       case AppView.DASHBOARD:
         if (!currentUser) {
-          setCurrentView(AppView.LOGIN);
-          return null;
+          // User is not authenticated, render the Login component instead of causing a side-effect.
+          return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
         }
         return <Dashboard 
           user={currentUser} 
@@ -774,8 +774,8 @@ const App: React.FC = () => {
         />
       case AppView.ADMIN_DASHBOARD:
          if (!currentTeamMember) {
-          setCurrentView(AppView.LOGIN);
-          return null;
+          // Team member is not authenticated, render the Login component.
+          return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
         }
         return <AdminDashboard 
             currentUser={currentTeamMember}
@@ -825,7 +825,7 @@ const App: React.FC = () => {
         />
       case AppView.SERVICE_DETAIL: {
         if (!selectedService) {
-          setCurrentView(defaultHomeView);
+          setCurrentView(AppView.HOME);
           return null;
         }
         const relevantVendors = vendors.filter(vendor => 
@@ -844,7 +844,7 @@ const App: React.FC = () => {
       }
       case AppView.PRODUCT_DETAIL: {
         if (!selectedProduct) {
-          setCurrentView(defaultHomeView);
+          setCurrentView(AppView.HOME);
           return null;
         }
         return <ProductDetail 
@@ -908,7 +908,7 @@ const App: React.FC = () => {
       case AppView.BECOME_VENDOR:
         return <PageWrapper><BecomeAVendorPage onSubmit={handleVendorApplicationSubmit} /></PageWrapper>;
       default:
-        setCurrentView(defaultHomeView);
+        setCurrentView(AppView.HOME);
         return null;
     }
   };

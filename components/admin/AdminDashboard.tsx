@@ -1,7 +1,4 @@
 
-
-
-
 import React, { useState } from 'react';
 import { User, RequirementListing, Vendor, Service, QualifiedLead, SiteConfig, Product, VendorApplication, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from '../../types';
 import AdminStats from './AdminStats';
@@ -127,7 +124,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     const renderView = () => {
         switch (view) {
             case 'stats':
-                return isAdmin ? <AdminStats stats={stats} /> : null;
+                return isAdmin ? <AdminStats stats={stats} user={currentUser} /> : null;
             case 'leads':
                  return <AdminManageLeads
                     qualifiedLeads={leads}
@@ -166,7 +163,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
             case 'applications':
                 return isAdmin ? <AdminApplications applications={vendorApplications} /> : null;
             default:
-                return isAdmin ? <AdminStats stats={stats} /> : <AdminManageLeads {...props} />;
+                return isAdmin ? <AdminStats stats={stats} user={currentUser} /> : <AdminManageLeads {...props} />;
         }
     };
 

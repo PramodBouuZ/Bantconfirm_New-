@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { User } from '../../types';
+import { TeamMember } from '../../types';
 import { UsersIcon } from '../icons/UsersIcon';
 import { VendorsIcon } from '../icons/VendorsIcon';
 import { ListingsIcon } from '../icons/ListingsIcon';
@@ -8,7 +9,7 @@ import { LeadIcon } from '../icons/LeadIcon';
 
 interface AdminStatsProps {
     stats: { users: number; vendors: number; listings: number; leads: number };
-    user: User;
+    user: TeamMember;
 }
 
 const AdminStats: React.FC<AdminStatsProps> = ({ stats, user }) => {
