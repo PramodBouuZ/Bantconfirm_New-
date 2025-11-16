@@ -1,7 +1,7 @@
 
 
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry } from './types';
+import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LeadForm from './components/LeadForm';
@@ -21,6 +21,7 @@ import { VENDORS_DATA } from './data/vendors';
 import { SERVICES_DATA } from './data/services';
 import { LISTINGS } from './data/listings';
 import { USERS } from './data/users';
+import { TEAM_DATA } from './data/team';
 import { LEADS_DATA } from './data/leads';
 import { matchVendorsToListing, matchVendorsToLead } from './services/geminiService';
 import ToastNotification from './components/ToastNotification';
@@ -31,6 +32,8 @@ import ProductDetail from './components/ProductDetail';
 import BookDemoModal from './components/BookDemoModal';
 import AILeadPoster from './components/AILeadPoster';
 import ForgotPassword from './components/ForgotPassword';
+import { CATEGORIES_DATA } from './data/categories';
+import { whatsAppService } from './services/whatsappService';
 
 
 const App: React.FC = () => {
@@ -50,6 +53,8 @@ const App: React.FC = () => {
   const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
   const [isLeadMatching, setIsLeadMatching] = useState(false);
   const [lastMatchedVendors, setLastMatchedVendors] = useState<string[] | null>(null);
+  const [initialMarketplaceSearch, setInitialMarketplaceSearch] = useState<string | null>(null);
+
 
   // --- Persisted State ---
   const [listings, setListings] = useState<RequirementListing[]>(() => {
@@ -69,6 +74,16 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Failed to load users from localStorage", error);
       return USERS;
+    }
+  });
+  
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_team');
+      return saved ? JSON.parse(saved) : TEAM_DATA;
+    } catch (error) {
+      console.error("Failed to load team from localStorage", error);
+      return TEAM_DATA;
     }
   });
 
@@ -115,11 +130,20 @@ const App: React.FC = () => {
         linkedin: 'https://www.linkedin.com',
         instagram: 'https://www.instagram.com',
         facebook: 'https://www.facebook.com',
+      },
+      logo: '',
+      favicon: '',
+      whatsappConfig: {
+        enabled: false,
+        apiEndpoint: '',
+        apiKey: '',
+        adminMobile: '',
       }
     };
     try {
       const saved = localStorage.getItem('bant_site_config');
-      return saved ? JSON.parse(saved) : initialData;
+      const parsed = saved ? JSON.parse(saved) : {};
+      return { ...initialData, ...parsed }; // Merge to ensure new keys exist
     } catch (error) {
       console.error("Failed to load site config from localStorage", error);
       return initialData;
@@ -135,6 +159,16 @@ const App: React.FC = () => {
       return PRODUCTS_DATA;
     }
   });
+
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>(() => {
+    try {
+      const saved = localStorage.getItem('bant_product_categories');
+      return saved ? JSON.parse(saved) : CATEGORIES_DATA;
+    } catch (error) {
+      console.error("Failed to load product categories from localStorage", error);
+      return CATEGORIES_DATA;
+    }
+  });
   
   const [vendorApplications, setVendorApplications] = useState<VendorApplication[]>(() => {
     try {
@@ -147,6 +181,7 @@ const App: React.FC = () => {
   });
 
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentTeamMember, setCurrentTeamMember] = useState<TeamMember | null>(null);
 
   const productsWithLeadCounts = useMemo(() => {
     return products.map(product => {
@@ -203,16 +238,49 @@ const App: React.FC = () => {
     }
   }, [listings]);
 
+  // Clear initial search term when navigating away from marketplace
+  useEffect(() => {
+    if (currentView !== AppView.LISTINGS_MARKETPLACE) {
+      setInitialMarketplaceSearch(null);
+    }
+  }, [currentView]);
+  
+  // Update favicon dynamically
+  useEffect(() => {
+    const favicon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+    if (favicon && siteConfig.favicon) {
+      favicon.href = siteConfig.favicon;
+    }
+  }, [siteConfig.favicon]);
+
   // --- Save state to localStorage on changes ---
   useEffect(() => { try { localStorage.setItem('bant_users', JSON.stringify(users)); } catch (e) { console.error(e); } }, [users]);
+  useEffect(() => { try { localStorage.setItem('bant_team', JSON.stringify(teamMembers)); } catch (e) { console.error(e); } }, [teamMembers]);
   useEffect(() => { try { localStorage.setItem('bant_listings', JSON.stringify(listings)); } catch (e) { console.error(e); } }, [listings]);
   useEffect(() => { try { localStorage.setItem('bant_services', JSON.stringify(services)); } catch (e) { console.error(e); } }, [services]);
   useEffect(() => { try { localStorage.setItem('bant_vendors', JSON.stringify(vendors)); } catch (e) { console.error(e); } }, [vendors]);
   useEffect(() => { try { localStorage.setItem('bant_qualified_leads', JSON.stringify(qualifiedLeads)); } catch (e) { console.error(e); } }, [qualifiedLeads]);
   useEffect(() => { try { localStorage.setItem('bant_site_config', JSON.stringify(siteConfig)); } catch (e) { console.error(e); } }, [siteConfig]);
   useEffect(() => { try { localStorage.setItem('bant_products', JSON.stringify(products)); } catch (e) { console.error(e); } }, [products]);
+  useEffect(() => { try { localStorage.setItem('bant_product_categories', JSON.stringify(productCategories)); } catch (e) { console.error(e); } }, [productCategories]);
   useEffect(() => { try { localStorage.setItem('bant_vendor_applications', JSON.stringify(vendorApplications)); } catch (e) { console.error(e); } }, [vendorApplications]);
 
+  const handleSendWhatsApp = async (recipient: string, message: string) => {
+    if (siteConfig.whatsappConfig?.enabled && recipient) {
+        try {
+            await whatsAppService.sendMessage(siteConfig.whatsappConfig, recipient, message);
+        } catch (error) {
+            console.error("Failed to send WhatsApp message:", error);
+        }
+    }
+  };
+
+  const handleTestWhatsApp = async (config: WhatsAppConfig): Promise<{success: boolean, message: string}> => {
+    if (!config.adminMobile) {
+        return { success: false, message: "Admin mobile number is not set." };
+    }
+    return await whatsAppService.sendMessage(config, config.adminMobile, "This is a test message from BANTConfirm.");
+  };
 
   const handleNav = (view: AppView) => {
     if (view === AppView.HOME) {
@@ -221,6 +289,11 @@ const App: React.FC = () => {
     }
     setConfirmationMessage(null); // Clear confirmation on navigation
     setCurrentView(view);
+  };
+
+  const handleMarketplaceSearch = (term: string) => {
+    setInitialMarketplaceSearch(term);
+    handleNav(AppView.LISTINGS_MARKETPLACE);
   };
 
   const handleGetQuote = (serviceName?: string) => {
@@ -272,6 +345,11 @@ const App: React.FC = () => {
       
       setQualifiedLeads(prev => [newLead, ...prev]);
 
+      handleSendWhatsApp(
+        siteConfig.whatsappConfig?.adminMobile || '',
+        `New AI-qualified lead from ${newLead.leadDetails.name} for service: "${newLead.leadDetails.service}".`
+      );
+
       // Trigger AI matching in the background
       const matchedVendorNames = await matchVendorsToLead(newLead, vendors);
       
@@ -282,6 +360,7 @@ const App: React.FC = () => {
             assignedAt: new Date().toISOString(),
             vendorNames: matchedVendorNames,
           };
+          handleAssignVendorsToLead(newLead.id, matchedVendorNames); // Use the handler to also send notifications
           return {
             ...l,
             status: 'Assigned',
@@ -333,15 +412,14 @@ const App: React.FC = () => {
       aiMatches: [],
       status: 'Pending Validation',
       assignedVendorNames: [],
+      assignmentHistory: [],
     };
     
-    // Add the listing immediately so the user sees it
     setListings(prev => [newListing, ...prev]);
      if (currentUser) {
       setConfirmationMessage(`Your requirement "${newListing.title}" has been posted successfully! A confirmation email has been sent to ${currentUser.email}.`);
     }
 
-    // Create a notification for admins
     const newNotification: Notification = {
         id: Date.now(),
         message: `New requirement posted: "${newListing.title}"`,
@@ -351,13 +429,16 @@ const App: React.FC = () => {
     setNotifications(prev => [newNotification, ...prev].slice(0, 10)); // Keep latest 10
     setToast(newNotification); // Trigger the on-screen toast
 
+    handleSendWhatsApp(
+      siteConfig.whatsappConfig?.adminMobile || '', 
+      `New requirement posted by ${newListing.authorName}: "${newListing.title}"`
+    );
+
     setCurrentView(currentUser ? AppView.DASHBOARD : AppView.LISTINGS_MARKETPLACE);
     setIsMatching(true);
 
-    // Trigger AI matching in the background
     const matches = await matchVendorsToListing(newListing, vendors);
     
-    // Update the listing with AI matches
     setListings(prev => prev.map(l => l.id === newListing.id ? { ...l, aiMatches: matches } : l));
     setIsMatching(false);
   };
@@ -374,6 +455,7 @@ const App: React.FC = () => {
       aiMatches: [],
       status: 'Pending Validation',
       assignedVendorNames: [],
+      assignmentHistory: [],
     };
     setListings(prev => [newListing, ...prev]);
   };
@@ -389,15 +471,49 @@ const App: React.FC = () => {
   };
 
   const handleAssignVendorsToListing = (listingId: number, vendorNames: string[]) => {
-      setListings(prev => prev.map(l =>
-          l.id === listingId ? { ...l, status: 'Assigned', assignedVendorNames: vendorNames } : l
-      ));
+      const listing = listings.find(l => l.id === listingId);
+      if (!listing) return;
+
+      setListings(prev => prev.map(l => {
+          if (l.id === listingId) {
+            const newHistoryEntry: AssignmentHistoryEntry = {
+                assignedAt: new Date().toISOString(),
+                vendorNames: vendorNames,
+            };
+            const updatedHistory = [...(l.assignmentHistory || []), newHistoryEntry];
+            return { 
+                ...l, 
+                status: 'Assigned', 
+                assignedVendorNames: vendorNames,
+                assignmentHistory: updatedHistory,
+            };
+          }
+          return l;
+      }));
+
+      const user = users.find(u => u.name === listing.authorName);
+      if (user?.mobile) {
+        handleSendWhatsApp(user.mobile, `Your requirement "${listing.title}" has been assigned to vendors. They will be in touch shortly.`);
+      }
+      vendorNames.forEach(name => {
+        const vendor = vendors.find(v => v.name === name);
+        if (vendor?.mobile) {
+            handleSendWhatsApp(vendor.mobile, `New requirement assigned: "${listing.title}". Please review and connect with the customer.`);
+        }
+      });
+      handleSendWhatsApp(siteConfig.whatsappConfig?.adminMobile || '', `Requirement "${listing.title}" assigned to: ${vendorNames.join(', ')}`);
   };
 
 
-  const handleLogin = (user: User) => {
-    setCurrentUser(user);
-    setCurrentView(user.isAdmin ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD);
+  const handleLogin = (user: User | TeamMember) => {
+    if ('role' in user) { // It's a TeamMember
+        setCurrentTeamMember(user);
+        setCurrentUser(null);
+    } else { // It's a User
+        setCurrentUser(user);
+        setCurrentTeamMember(null);
+    }
+    setCurrentView(AppView.ADMIN_DASHBOARD); // Both go to admin dashboard view wrapper
   };
 
   const handleSignup = (user: Omit<User, 'id'>) => {
@@ -406,10 +522,14 @@ const App: React.FC = () => {
     setCurrentUser(newUser);
     setConfirmationMessage(`Welcome to BANTConfirm, ${newUser.name.split(' ')[0]}! A confirmation email has been sent to ${newUser.email}.`);
     setCurrentView(AppView.DASHBOARD);
+    if (newUser.mobile) {
+        handleSendWhatsApp(newUser.mobile, `Welcome to BANTConfirm, ${newUser.name.split(' ')[0]}! We're glad to have you.`);
+    }
   };
 
   const handleLogout = () => {
     setCurrentUser(null);
+    setCurrentTeamMember(null);
     setCurrentView(AppView.HOME);
     localStorage.removeItem('bant_lead_poster_conversation');
     setSavedLeadPosterConversation(null);
@@ -463,6 +583,19 @@ const App: React.FC = () => {
     setUsers(prev => prev.filter(u => u.id !== userId));
   };
 
+  const handleAddTeamMember = (member: Omit<TeamMember, 'id'>) => {
+    const newMember = { ...member, id: teamMembers.length > 0 ? Math.max(...teamMembers.map(m => m.id)) + 1 : 1 };
+    setTeamMembers(prev => [...prev, newMember]);
+  };
+  
+  const handleUpdateTeamMember = (updatedMember: TeamMember) => {
+    setTeamMembers(prev => prev.map(m => m.id === updatedMember.id ? updatedMember : m));
+  };
+  
+  const handleDeleteTeamMember = (memberId: number) => {
+    setTeamMembers(prev => prev.filter(m => m.id !== memberId));
+  };
+
 
   const handleMarkNotificationsAsRead = () => {
     setNotifications(prevNotifications => 
@@ -471,22 +604,33 @@ const App: React.FC = () => {
   };
 
   const handleAssignVendorsToLead = (leadId: number, vendorNames: string[]) => {
-    setQualifiedLeads(prev => prev.map(lead => {
-      if (lead.id === leadId) {
+    const lead = qualifiedLeads.find(l => l.id === leadId);
+    if (!lead) return;
+
+    setQualifiedLeads(prev => prev.map(l => {
+      if (l.id === leadId) {
         const newHistoryEntry: AssignmentHistoryEntry = {
           assignedAt: new Date().toISOString(),
           vendorNames: vendorNames,
         };
-        const updatedHistory = [...(lead.assignmentHistory || []), newHistoryEntry];
+        const updatedHistory = [...(l.assignmentHistory || []), newHistoryEntry];
         return {
-          ...lead,
+          ...l,
           status: 'Assigned',
-          assignedVendorNames: vendorNames, // Keep this for current display logic
+          assignedVendorNames: vendorNames,
           assignmentHistory: updatedHistory,
         };
       }
-      return lead;
+      return l;
     }));
+
+    vendorNames.forEach(name => {
+        const vendor = vendors.find(v => v.name === name);
+        if (vendor?.mobile) {
+            handleSendWhatsApp(vendor.mobile, `New qualified lead assigned for "${lead.leadDetails.service}". Contact: ${lead.leadDetails.name}, ${lead.leadDetails.company}.`);
+        }
+    });
+    handleSendWhatsApp(siteConfig.whatsappConfig?.adminMobile || '', `Lead for "${lead.leadDetails.service}" assigned to: ${vendorNames.join(', ')}`);
   };
 
   const handleUpdateSiteConfig = (data: SiteConfig) => {
@@ -504,6 +648,31 @@ const App: React.FC = () => {
   const handleDeleteProduct = (productId: number) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
   };
+
+  const handleAddCategory = (category: Omit<ProductCategory, 'id'>) => {
+    setProductCategories(prev => [...prev, { ...category, id: Date.now() }]);
+  };
+  
+  const handleUpdateCategory = (updatedCategory: ProductCategory) => {
+      const oldCategoryName = productCategories.find(c => c.id === updatedCategory.id)?.name;
+      setProductCategories(prev => prev.map(c => c.id === updatedCategory.id ? updatedCategory : c));
+      if(oldCategoryName && oldCategoryName !== updatedCategory.name) {
+        setProducts(prev => prev.map(p => p.category === oldCategoryName ? { ...p, category: updatedCategory.name } : p));
+      }
+  };
+  
+  const handleDeleteCategory = (categoryId: number) => {
+      const categoryToDelete = productCategories.find(c => c.id === categoryId);
+      if (!categoryToDelete) return;
+
+      const isCategoryInUse = products.some(p => p.category === categoryToDelete.name);
+      if(isCategoryInUse) {
+        alert('Cannot delete category as it is currently in use by one or more products.');
+        return;
+      }
+      setProductCategories(prev => prev.filter(c => c.id !== categoryId));
+  };
+
 
   const handlePostFromProduct = (product: Product) => {
     if (!currentUser) {
@@ -549,12 +718,12 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
-    // Determine the effective home view
-    const homeView = currentUser?.isAdmin ? AppView.ADMIN_DASHBOARD : currentUser ? AppView.DASHBOARD : AppView.HOME;
+    const isLoggedIn = currentUser || currentTeamMember;
+    const defaultHomeView = isLoggedIn ? AppView.DASHBOARD : AppView.HOME;
 
     let viewToRender = currentView;
-    if (currentView === AppView.HOME && currentUser) {
-      viewToRender = currentUser.isAdmin ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD;
+    if (currentView === AppView.HOME && isLoggedIn) {
+      viewToRender = currentTeamMember ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD;
     }
 
     const PageWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
@@ -572,15 +741,17 @@ const App: React.FC = () => {
           onGetQuote={handleGetQuote}
           onPostRequirement={() => handleNav(currentUser ? AppView.AI_LEAD_POSTER : AppView.SIGNUP)}
           onSelectProduct={handleSelectProduct}
+          onSelectService={handleSelectService}
           onBookDemo={handleBookDemo}
           onNav={handleNav}
+          onSearch={handleMarketplaceSearch}
         />;
       case AppView.DASHBOARD:
         if (!currentUser) {
           setCurrentView(AppView.LOGIN);
           return null;
         }
-        return <PageWrapper><Dashboard 
+        return <Dashboard 
           user={currentUser} 
           userListings={listings.filter(l => l.authorName === currentUser.name)}
           products={productsWithLeadCounts}
@@ -595,14 +766,14 @@ const App: React.FC = () => {
           promoBanner={siteConfig.promoBanner}
           onSelectProduct={handleSelectProduct}
           onBookDemo={handleBookDemo}
-        /></PageWrapper>
+        />
       case AppView.ADMIN_DASHBOARD:
-         if (!currentUser || !currentUser.isAdmin) {
+         if (!currentTeamMember) {
           setCurrentView(AppView.LOGIN);
           return null;
         }
-        return <PageWrapper><AdminDashboard 
-            user={currentUser}
+        return <AdminDashboard 
+            user={currentTeamMember}
             stats={{
               users: users.length,
               vendors: vendors.length,
@@ -616,7 +787,9 @@ const App: React.FC = () => {
             leads={qualifiedLeads}
             siteConfig={siteConfig}
             products={productsWithLeadCounts}
+            productCategories={productCategories}
             vendorApplications={vendorApplications}
+            teamMembers={teamMembers}
             onDeleteListing={handleDeleteListing}
             onAddListing={handleAddListing}
             onUpdateListing={handleUpdateListing}
@@ -633,35 +806,42 @@ const App: React.FC = () => {
             onDeleteUser={handleDeleteUser}
             onAssignVendorsToLead={handleAssignVendorsToLead}
             onUpdateSiteConfig={handleUpdateSiteConfig}
+            onTestWhatsApp={handleTestWhatsApp}
             onAddProduct={handleAddProduct}
             onUpdateProduct={handleUpdateProduct}
             onDeleteProduct={handleDeleteProduct}
-        /></PageWrapper>
+            onAddCategory={handleAddCategory}
+            onUpdateCategory={handleUpdateCategory}
+            onDeleteCategory={handleDeleteCategory}
+            onAddTeamMember={handleAddTeamMember}
+            onUpdateTeamMember={handleUpdateTeamMember}
+            onDeleteTeamMember={handleDeleteTeamMember}
+        />
       case AppView.SERVICE_DETAIL: {
         if (!selectedService) {
-          setCurrentView(homeView);
+          setCurrentView(defaultHomeView);
           return null;
         }
         const relevantVendors = vendors.filter(vendor => 
           vendor.specialties.includes(selectedService.name)
         );
-        return <PageWrapper><ServiceDetail 
+        return <ServiceDetail 
           service={selectedService} 
           vendors={relevantVendors}
           promoBanner={siteConfig.promoBanner}
           onBack={() => {
             setSelectedService(null);
-            setCurrentView(homeView);
+            setCurrentView(AppView.HOME);
           }}
           onGetQuote={() => handleGetQuote(selectedService.name)}
-        /></PageWrapper>;
+        />;
       }
       case AppView.PRODUCT_DETAIL: {
         if (!selectedProduct) {
-          setCurrentView(homeView);
+          setCurrentView(defaultHomeView);
           return null;
         }
-        return <PageWrapper><ProductDetail 
+        return <ProductDetail 
           product={selectedProduct}
           onBack={() => {
             setSelectedProduct(null);
@@ -669,7 +849,7 @@ const App: React.FC = () => {
           }}
           onBookDemo={handleBookDemo}
           onPostRequirement={handlePostFromProduct}
-        /></PageWrapper>
+        />
       }
       case AppView.LEAD_FORM:
         return <PageWrapper><LeadForm onSubmit={handleLeadSubmit} initialService={initialServiceForForm} services={services} /></PageWrapper>;
@@ -694,12 +874,13 @@ const App: React.FC = () => {
       case AppView.AI_SOLUTION_FINDER:
         return <PageWrapper><AISolutionFinder onSelectService={handleSelectService} services={services} vendors={vendors} /></PageWrapper>;
       case AppView.LISTINGS_MARKETPLACE:
-        return <PageWrapper><ListingsMarketplace 
+        return <ListingsMarketplace 
                  products={productsWithLeadCounts} 
                  onPostRequirement={() => handleNav(currentUser ? AppView.AI_LEAD_POSTER : AppView.SIGNUP)} 
                  onSelectProduct={handleSelectProduct}
                  onBookDemo={handleBookDemo}
-               /></PageWrapper>;
+                 initialSearchTerm={initialMarketplaceSearch}
+               />;
        case AppView.AI_LEAD_POSTER:
         if (!currentUser) {
           setCurrentView(AppView.LOGIN);
@@ -707,13 +888,13 @@ const App: React.FC = () => {
         }
         return <PageWrapper><AILeadPoster onComplete={handleRequirementPosted} currentUser={currentUser} /></PageWrapper>;
       case AppView.ABOUT:
-        return <PageWrapper><AboutPage /></PageWrapper>;
+        return <AboutPage />;
       case AppView.CONTACT:
-        return <PageWrapper><ContactPage /></PageWrapper>;
+        return <ContactPage />;
       case AppView.FAQ:
         return <PageWrapper><FAQPage /></PageWrapper>;
       case AppView.LOGIN:
-        return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} /></PageWrapper>;
+        return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
       case AppView.SIGNUP:
         return <PageWrapper><Signup onSignup={handleSignup} onSwitchToLogin={() => handleNav(AppView.LOGIN)} /></PageWrapper>;
       case AppView.FORGOT_PASSWORD:
@@ -721,14 +902,16 @@ const App: React.FC = () => {
       case AppView.BECOME_VENDOR:
         return <PageWrapper><BecomeAVendorPage onSubmit={handleVendorApplicationSubmit} /></PageWrapper>;
       default:
-        setCurrentView(homeView);
+        setCurrentView(defaultHomeView);
         return null;
     }
   };
 
+  const loggedInUser = currentUser || currentTeamMember;
+
   return (
     <div className="bg-white min-h-screen flex flex-col text-gray-800" style={{fontFamily: "'Inter', sans-serif"}}>
-      {toast && currentUser?.isAdmin && (
+      {toast && currentTeamMember?.role === TeamRole.Admin && (
         <ToastNotification 
           notification={toast}
           onClose={() => setToast(null)}
@@ -746,15 +929,16 @@ const App: React.FC = () => {
       )}
       <Header 
         onNav={handleNav} 
-        currentUser={currentUser} 
+        currentUser={loggedInUser} 
         onLogout={handleLogout} 
         notifications={notifications}
         onMarkNotificationsAsRead={handleMarkNotificationsAsRead}
+        logo={siteConfig.logo}
       />
       <main className="flex-grow">
         {renderContent()}
       </main>
-      <Footer onNav={handleNav} socialLinks={siteConfig.socialLinks} />
+      <Footer onNav={handleNav} socialLinks={siteConfig.socialLinks} logo={siteConfig.logo} />
     </div>
   );
 };

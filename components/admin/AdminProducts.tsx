@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { Product } from '../../types';
+import { Product, ProductCategory } from '../../types';
 import ProductForm from './ProductForm';
 import { TrashIcon } from '../icons/TrashIcon';
 import { EditIcon } from '../icons/EditIcon';
 
 interface AdminProductsProps {
     products: Product[];
+    productCategories: ProductCategory[];
     onAdd: (product: Omit<Product, 'id'>) => void;
     onUpdate: (product: Product) => void;
     onDelete: (productId: number) => void;
 }
 
-const AdminProducts: React.FC<AdminProductsProps> = ({ products, onAdd, onUpdate, onDelete }) => {
+const AdminProducts: React.FC<AdminProductsProps> = ({ products, productCategories, onAdd, onUpdate, onDelete }) => {
     const [editingProduct, setEditingProduct] = useState<Product | 'new' | null>(null);
 
     const handleSave = (product: Product | Omit<Product, 'id'>) => {
@@ -34,6 +35,7 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onAdd, onUpdate
             {editingProduct && (
                 <ProductForm
                     product={editingProduct === 'new' ? null : editingProduct}
+                    categories={productCategories}
                     onSave={handleSave}
                     onCancel={() => setEditingProduct(null)}
                 />
@@ -52,8 +54,8 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onAdd, onUpdate
                     <thead className="bg-gray-50">
                         <tr>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                             <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                            <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Features</th>
                             <th scope="col" className="relative px-6 py-3"><span className="sr-only">Actions</span></th>
                         </tr>
                     </thead>
@@ -70,8 +72,8 @@ const AdminProducts: React.FC<AdminProductsProps> = ({ products, onAdd, onUpdate
                                         </div>
                                     </div>
                                 </td>
+                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.category}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{`${product.price} ${product.priceUnit || ''}`}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{product.features.join(', ')}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                     <button
                                         onClick={() => setEditingProduct(product)}

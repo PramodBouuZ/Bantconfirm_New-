@@ -1,14 +1,17 @@
+
+
 import React, { useState } from 'react';
-import { User } from '../types';
+import { User, TeamMember } from '../types';
 
 interface LoginProps {
-  onLogin: (user: User) => void;
+  onLogin: (user: User | TeamMember) => void;
   onSwitchToSignup: () => void;
   onForgotPassword: () => void;
   users: User[];
+  teamMembers: TeamMember[];
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPassword, users }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPassword, users, teamMembers }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -16,16 +19,23 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPasswo
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    // In a real app, you would validate credentials against a backend.
-    // Here, we find a user from our mock data.
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-
-    if (user) {
-      // NOTE: We are not checking the password for this demo.
-      onLogin(user);
-    } else {
-      setError('Invalid email or password.');
+    // NOTE: We are not checking the password for this demo.
+    
+    // Check internal team members first
+    const teamMember = teamMembers.find(m => m.email.toLowerCase() === email.toLowerCase());
+    if (teamMember) {
+        onLogin(teamMember);
+        return;
     }
+
+    // Then check customer users
+    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    if (user) {
+      onLogin(user);
+      return;
+    }
+    
+    setError('Invalid email or password.');
   };
 
   return (

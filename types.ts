@@ -51,6 +51,7 @@ export interface LeadDetails {
   name: string;
   company: string;
   email: string;
+  mobile?: string;
   service: string;
 }
 
@@ -61,6 +62,7 @@ export interface Vendor {
   description: string;
   specialties: string[];
   pricingTier: 'SMB' | 'Enterprise' | 'Flexible';
+  mobile?: string;
 }
 
 export interface Service {
@@ -118,6 +120,7 @@ export interface RequirementListing {
   status: ListingStatus;
   assignedVendorNames: string[];
   bantData?: BantData;
+  assignmentHistory?: AssignmentHistoryEntry[];
 }
 
 export interface AIRecommendation {
@@ -134,6 +137,18 @@ export interface User {
   mobile?: string;
   location?: string;
   isAdmin?: boolean;
+}
+
+export enum TeamRole {
+    Admin = 'Admin',
+    LeadManager = 'Lead Manager',
+}
+
+export interface TeamMember {
+    id: number;
+    name: string;
+    email: string;
+    role: TeamRole;
 }
 
 export interface StoredConversation {
@@ -183,6 +198,13 @@ export interface PromotionalBannerData {
   link: string;
 }
 
+export interface WhatsAppConfig {
+    enabled: boolean;
+    apiKey: string;
+    apiEndpoint: string;
+    adminMobile: string; // To receive system notifications
+}
+
 export interface SiteConfig {
     promoBanner: PromotionalBannerData;
     socialLinks: {
@@ -190,6 +212,14 @@ export interface SiteConfig {
         instagram: string;
         facebook: string;
     }
+    logo?: string; // Base64
+    favicon?: string; // Base64
+    whatsappConfig?: WhatsAppConfig;
+}
+
+export interface ProductCategory {
+  id: number;
+  name: string;
 }
 
 export interface Product {
@@ -203,6 +233,7 @@ export interface Product {
   features: string[];
   author?: string;
   sales?: number;
+  category: string;
   rating?: {
     rate: number;
     count: number;

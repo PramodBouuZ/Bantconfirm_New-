@@ -9,10 +9,11 @@ interface ListingsMarketplaceProps {
   onPostRequirement: () => void;
   onSelectProduct: (product: Product) => void;
   onBookDemo: (product: Product) => void;
+  initialSearchTerm?: string | null;
 }
 
-const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onPostRequirement, onSelectProduct, onBookDemo }) => {
-    const [searchTerm, setSearchTerm] = useState('');
+const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onPostRequirement, onSelectProduct, onBookDemo, initialSearchTerm }) => {
+    const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
     
     const filteredProducts = useMemo(() => {
         return products.filter(product => {

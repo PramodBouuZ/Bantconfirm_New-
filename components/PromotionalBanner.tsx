@@ -4,9 +4,13 @@ import { HandshakeIcon } from './icons/HandshakeIcon';
 import { VerifiedIcon } from './icons/VerifiedIcon';
 import { SparklesIcon } from './icons/SparklesIcon';
 
-const PromotionalBanner: React.FC = () => {
+interface PromotionalBannerProps {
+  bgColor?: string;
+}
+
+const PromotionalBanner: React.FC<PromotionalBannerProps> = ({ bgColor = 'bg-white' }) => {
   return (
-    <section className="bg-white py-16 md:py-24">
+    <section className={`${bgColor} py-16 md:py-24`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900">Why Choose BANTConfirm?</h2>

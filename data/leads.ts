@@ -7,6 +7,7 @@ export const LEADS_DATA: QualifiedLead[] = [
       name: 'Alice Martin',
       company: 'Innovate Corp',
       email: 'alice.martin@innovatecorp.com',
+      mobile: '+1-202-555-0191',
       service: 'Cloud Solutions',
     },
     bantData: {
@@ -26,6 +27,7 @@ export const LEADS_DATA: QualifiedLead[] = [
       name: 'Bob Johnson',
       company: 'Global Tech',
       email: 'bob.j@globaltech.com',
+      mobile: '+1-202-555-0114',
       service: 'Cybersecurity Services',
     },
     bantData: {
@@ -50,6 +52,7 @@ export const LEADS_DATA: QualifiedLead[] = [
       name: 'Charlie Brown',
       company: 'Future Solutions',
       email: 'charlie@futuresolutions.com',
+      mobile: '+1-202-555-0162',
       service: 'Unified Communications',
     },
     bantData: {

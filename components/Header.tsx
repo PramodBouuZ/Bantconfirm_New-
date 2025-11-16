@@ -1,15 +1,17 @@
 
+
 import React, { useState, useRef, useEffect } from 'react';
-import { AppView, User, Notification } from '../types';
+import { AppView, User, Notification, TeamMember, TeamRole } from '../types';
 import { BellIcon } from './icons/BellIcon';
 import NotificationsDropdown from './NotificationsDropdown';
 
 interface HeaderProps {
   onNav: (view: AppView) => void;
-  currentUser: User | null;
+  currentUser: User | TeamMember | null;
   onLogout: () => void;
   notifications: Notification[];
   onMarkNotificationsAsRead: () => void;
+  logo?: string;
 }
 
 const UserCircleIcon = () => (
@@ -18,10 +20,14 @@ const UserCircleIcon = () => (
     </svg>
 );
 
-const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notifications, onMarkNotificationsAsRead }) => {
+const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notifications, onMarkNotificationsAsRead, logo }) => {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
   const notificationsRef = useRef<HTMLDivElement>(null);
+  
+  const isTeamMember = currentUser && 'role' in currentUser;
+  const isAdmin = isTeamMember && (currentUser as TeamMember).role === TeamRole.Admin;
+
 
   const handleToggleNotifications = () => {
     setIsNotificationsOpen(prev => {
@@ -44,6 +50,12 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [notificationsRef]);
+  
+  const getDashboardView = () => {
+    if (!currentUser) return AppView.HOME;
+    if (isTeamMember) return AppView.ADMIN_DASHBOARD;
+    return AppView.DASHBOARD;
+  };
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
@@ -51,26 +63,32 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
             <div 
-              className="text-3xl font-bold cursor-pointer"
+              className="cursor-pointer"
               onClick={() => onNav(AppView.HOME)}
             >
-              <span className="text-blue-600">BANT</span><span className="text-amber-500">Confirm</span>
+              {logo ? (
+                <img src={logo} alt="BANTConfirm Logo" className="h-10 w-auto" />
+              ) : (
+                <div className="text-3xl font-bold">
+                  <span className="text-blue-600">BANT</span><span className="text-amber-500">Confirm</span>
+                </div>
+              )}
             </div>
             <nav className="hidden lg:flex items-center space-x-8 ml-10">
-                <a onClick={() => onNav(AppView.HOME)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Home</a>
-                <a onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Products</a>
-                <a onClick={() => onNav(AppView.ABOUT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">About</a>
-                <a onClick={() => onNav(AppView.CONTACT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Contact</a>
+                <button onClick={() => onNav(AppView.HOME)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">Home</button>
+                <button onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">Products</button>
+                <button onClick={() => onNav(AppView.ABOUT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">About</button>
+                <button onClick={() => onNav(AppView.CONTACT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">Contact</button>
             </nav>
           </div>
           
           <div className="flex items-center space-x-4">
             {currentUser ? (
               <>
-                 <button onClick={() => onNav(currentUser.isAdmin ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD)} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none transition-colors">
+                 <button onClick={() => onNav(getDashboardView())} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none transition-colors">
                     <UserCircleIcon />
                  </button>
-                {currentUser.isAdmin && (
+                {isAdmin && (
                   <div className="relative" ref={notificationsRef}>
                     <button
                       onClick={handleToggleNotifications}

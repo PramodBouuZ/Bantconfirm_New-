@@ -8,6 +8,7 @@ export const VENDORS_DATA: Vendor[] = [
     description: 'Leading provider of scalable cloud infrastructure and managed IT services for enterprise clients.',
     specialties: ['Cloud Solutions', 'Cybersecurity Services', 'Managed IT Services'],
     pricingTier: 'Enterprise',
+    mobile: '+15551234567',
   },
   {
     name: 'Telecom Innovations Inc.',
@@ -16,6 +17,7 @@ export const VENDORS_DATA: Vendor[] = [
     description: 'Specializing in next-generation VoIP, Unified Communications, and fiber optic connectivity solutions.',
     specialties: ['Unified Communications'],
     pricingTier: 'Flexible',
+    mobile: '+15552345678',
   },
   {
     name: 'SecureData Corp',
@@ -24,6 +26,7 @@ export const VENDORS_DATA: Vendor[] = [
     description: 'Your trusted partner for comprehensive cybersecurity, data protection, and compliance services.',
     specialties: ['Cybersecurity Services'],
     pricingTier: 'Enterprise',
+    mobile: '+15553456789',
   },
   {
     name: 'ConnectSphere',
@@ -32,6 +35,7 @@ export const VENDORS_DATA: Vendor[] = [
     description: 'Affordable and reliable IT support and network solutions designed specifically for small to medium businesses.',
     specialties: ['Managed IT Services', 'Cloud Solutions'],
     pricingTier: 'SMB',
+    mobile: '+15554567890',
   },
   {
     name: 'Unified VoIP Pro',
@@ -40,6 +44,7 @@ export const VENDORS_DATA: Vendor[] = [
     description: 'Cost-effective VoIP and unified communication systems for businesses of all sizes.',
     specialties: ['Unified Communications'],
     pricingTier: 'SMB',
+    mobile: '+15555678901',
   },
   {
     name: 'CyberGuardians',
@@ -48,5 +53,6 @@ export const VENDORS_DATA: Vendor[] = [
     description: 'Elite cybersecurity services including penetration testing, threat intelligence, and incident response.',
     specialties: ['Cybersecurity Services'],
     pricingTier: 'Flexible',
+    mobile: '+15556789012',
   }
 ];

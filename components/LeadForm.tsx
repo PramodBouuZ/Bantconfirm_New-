@@ -11,6 +11,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, initialService, services 
   const [name, setName] = useState('');
   const [company, setCompany] = useState('');
   const [email, setEmail] = useState('');
+  const [mobile, setMobile] = useState('');
   const [service, setService] = useState(initialService || (services.length > 0 ? services[0].name : ''));
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
@@ -56,7 +57,7 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, initialService, services 
       return;
     }
     setErrors({});
-    onSubmit({ name, company, email, service });
+    onSubmit({ name, company, email, service, mobile });
   };
 
   return (
@@ -88,17 +89,30 @@ const LeadForm: React.FC<LeadFormProps> = ({ onSubmit, initialService, services 
           />
           {errors.company && <p className="text-red-500 text-xs mt-1">{errors.company}</p>}
         </div>
-        <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Work Email</label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
-            placeholder="john.doe@acme.com"
-          />
-          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Work Email</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className={`w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 ${errors.email ? 'border-red-500' : 'border-gray-300'}`}
+                placeholder="john.doe@acme.com"
+              />
+              {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+            </div>
+            <div>
+              <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">Mobile Number (Optional)</label>
+              <input
+                type="tel"
+                id="mobile"
+                value={mobile}
+                onChange={(e) => setMobile(e.target.value)}
+                className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+                placeholder="+1 555-123-4567"
+              />
+            </div>
         </div>
         <div>
           <label htmlFor="service" className="block text-sm font-medium text-gray-700 mb-1">Service of Interest</label>

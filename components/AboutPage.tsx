@@ -1,4 +1,5 @@
 import React from 'react';
+import PromotionalBanner from './PromotionalBanner';
 
 const AboutPage: React.FC = () => {
   const teamMembers = [
@@ -41,8 +42,10 @@ const AboutPage: React.FC = () => {
         </div>
       </div>
 
+      <PromotionalBanner bgColor="bg-gray-50" />
+
       {/* Meet the Team Section */}
-      <div className="bg-gray-50 py-16 md:py-24">
+      <div className="bg-white py-16 md:py-24">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Meet the Innovators</h2>

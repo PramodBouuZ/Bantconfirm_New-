@@ -15,6 +15,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ vendor, onSave, onCancel, exist
     const [description, setDescription] = useState('');
     const [specialties, setSpecialties] = useState('');
     const [pricingTier, setPricingTier] = useState<Vendor['pricingTier']>('Flexible');
+    const [mobile, setMobile] = useState('');
     const [error, setError] = useState('');
 
     const isEditing = vendor !== null;
@@ -27,6 +28,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ vendor, onSave, onCancel, exist
             setDescription(vendor.description);
             setSpecialties(vendor.specialties.join(', '));
             setPricingTier(vendor.pricingTier);
+            setMobile(vendor.mobile || '');
         }
     }, [vendor]);
     
@@ -64,6 +66,7 @@ const VendorForm: React.FC<VendorFormProps> = ({ vendor, onSave, onCancel, exist
             description: description.trim(),
             specialties: specialtiesArray,
             pricingTier,
+            mobile: mobile.trim(),
         });
     };
 
@@ -124,18 +127,31 @@ const VendorForm: React.FC<VendorFormProps> = ({ vendor, onSave, onCancel, exist
                         />
                         <p className="text-xs text-gray-500 mt-1">Enter a comma-separated list of specialties.</p>
                     </div>
-                    <div>
-                        <label htmlFor="pricingTier" className="block text-sm font-medium text-gray-700 mb-1">Pricing Tier</label>
-                        <select
-                            id="pricingTier"
-                            value={pricingTier}
-                            onChange={(e) => setPricingTier(e.target.value as Vendor['pricingTier'])}
-                            className="w-full px-4 py-2 border bg-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
-                        >
-                            <option value="SMB">SMB</option>
-                            <option value="Enterprise">Enterprise</option>
-                            <option value="Flexible">Flexible</option>
-                        </select>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="pricingTier" className="block text-sm font-medium text-gray-700 mb-1">Pricing Tier</label>
+                            <select
+                                id="pricingTier"
+                                value={pricingTier}
+                                onChange={(e) => setPricingTier(e.target.value as Vendor['pricingTier'])}
+                                className="w-full px-4 py-2 border bg-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+                            >
+                                <option value="SMB">SMB</option>
+                                <option value="Enterprise">Enterprise</option>
+                                <option value="Flexible">Flexible</option>
+                            </select>
+                        </div>
+                         <div>
+                            <label htmlFor="mobile" className="block text-sm font-medium text-gray-700 mb-1">Mobile Number (for notifications)</label>
+                            <input
+                                type="tel"
+                                id="mobile"
+                                value={mobile}
+                                onChange={(e) => setMobile(e.target.value)}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300"
+                                placeholder="+15551234567"
+                            />
+                        </div>
                     </div>
 
                     {error && <p className="text-red-500 text-sm">{error}</p>}

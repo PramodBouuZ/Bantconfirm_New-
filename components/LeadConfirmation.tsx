@@ -48,6 +48,7 @@ const LeadConfirmation: React.FC<LeadConfirmationProps> = ({ leadDetails, bantDa
              <InfoItem label="Name" value={leadDetails.name} />
              <InfoItem label="Company" value={leadDetails.company} />
              <InfoItem label="Email" value={leadDetails.email} />
+             <InfoItem label="Mobile" value={leadDetails.mobile || 'N/A'} />
              <InfoItem label="Service" value={leadDetails.service} />
           </div>
           <hr className="my-4"/>

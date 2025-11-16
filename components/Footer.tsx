@@ -1,85 +1,94 @@
 
+
 import React from 'react';
-import { AppView, SiteConfig } from '../types';
+import { AppView } from '../types';
 import { LinkedInIcon } from './icons/LinkedInIcon';
 import { InstagramIcon } from './icons/InstagramIcon';
 import { FacebookIcon } from './icons/FacebookIcon';
 
 interface FooterProps {
   onNav: (view: AppView) => void;
-  socialLinks: SiteConfig['socialLinks'];
+  socialLinks: {
+    linkedin: string;
+    instagram: string;
+    facebook: string;
+  };
+  logo?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ onNav, socialLinks }) => {
+const Footer: React.FC<FooterProps> = ({ onNav, socialLinks, logo }) => {
     
-    const FooterLink: React.FC<{view: AppView; label: string}> = ({ view, label }) => (
-        <li>
-            <a onClick={() => onNav(view)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">{label}</a>
-        </li>
-    );
-    
-    const SocialIcon: React.FC<{href: string; children: React.ReactNode}> = ({ href, children }) => (
-        <a href={href} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
-           {children}
-        </a>
-    );
+    const FooterLink: React.FC<{view?: AppView; href?: string; label: string}> = ({ view, href, label }) => {
+        const commonClasses = "text-gray-400 hover:text-white transition-colors cursor-pointer text-left w-full bg-transparent border-none p-0";
+
+        const content = view ? (
+             <button onClick={() => onNav(view)} className={commonClasses}>
+                {label}
+            </button>
+        ) : (
+            <a href={href || '#'} className={commonClasses}>
+              {label}
+            </a>
+        );
+
+        return (
+            <li className="mb-2">
+                {content}
+            </li>
+        );
+    };
 
     return (
-    <footer className="bg-[#13131A] text-white">
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+    <footer className="bg-gray-900 text-white">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* About Section */}
-            <div>
-                <h3 className="text-2xl font-bold mb-4 cursor-pointer" onClick={() => onNav(AppView.HOME)}>
-                    <span className="text-blue-500">BANT</span><span className="text-amber-400">Confirm</span>
-                </h3>
-                <p className="text-gray-400 mb-4 text-sm leading-relaxed">
-                   The intelligent B2B marketplace for AI-qualified IT and software leads, connecting businesses with top-tier vendors.
+            <div className="lg:col-span-1">
+                 <div className="mb-4 cursor-pointer" onClick={() => onNav(AppView.HOME)}>
+                    {logo ? (
+                      <img src={logo} alt="BANTConfirm Logo" className="h-10 w-auto" />
+                    ) : (
+                      <h3 className="text-3xl font-bold">
+                          <span className="text-blue-400">BANT</span><span className="text-amber-400">Confirm</span>
+                      </h3>
+                    )}
+                </div>
+                <p className="text-gray-400 text-sm leading-relaxed max-w-md mb-6">
+                   The intelligent B2B marketplace for AI-qualified IT and software leads.
                 </p>
                 <div className="flex space-x-4">
-                    {socialLinks.linkedin && <SocialIcon href={socialLinks.linkedin}><LinkedInIcon /></SocialIcon>}
-                    {socialLinks.instagram && <SocialIcon href={socialLinks.instagram}><InstagramIcon /></SocialIcon>}
-                    {socialLinks.facebook && <SocialIcon href={socialLinks.facebook}><FacebookIcon /></SocialIcon>}
+                  <a href={socialLinks.linkedin} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white"><LinkedInIcon /></a>
+                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white"><InstagramIcon /></a>
+                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white"><FacebookIcon /></a>
                 </div>
             </div>
-            {/* Quick Links */}
+            
+            {/* Links Sections */}
             <div>
-                <h3 className="text-lg font-semibold mb-4 text-white">Useful Link</h3>
-                <ul className="space-y-3 text-sm">
+                <h3 className="text-lg font-semibold mb-4 tracking-wider uppercase">Company</h3>
+                <ul className="space-y-1 text-sm">
                     <FooterLink view={AppView.ABOUT} label="About Us" />
                     <FooterLink view={AppView.CONTACT} label="Contact" />
                     <FooterLink view={AppView.FAQ} label="FAQ" />
-                    <FooterLink view={AppView.BECOME_VENDOR} label="Become a Vendor" />
+                </ul>
+            </div>
+            <div>
+                <h3 className="text-lg font-semibold mb-4 tracking-wider uppercase">For Partners</h3>
+                <ul className="space-y-1 text-sm">
+                   <FooterLink view={AppView.BECOME_VENDOR} label="Become a Vendor" />
+                   <FooterLink view={AppView.LOGIN} label="Vendor Login" />
                 </ul>
             </div>
              <div>
-                <h3 className="text-lg font-semibold mb-4 text-white">Our Community</h3>
-                <ul className="space-y-3 text-sm">
-                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Forum</a></li>
-                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Members</a></li>
-                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Case Studies</a></li>
-                   <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Events</a></li>
+                <h3 className="text-lg font-semibold mb-4 tracking-wider uppercase">Legal</h3>
+                <ul className="space-y-1 text-sm">
+                   <FooterLink href="#" label="Privacy Policy" />
+                   <FooterLink href="#" label="Terms of Service" />
                 </ul>
             </div>
-            {/* Newsletter */}
-            <div>
-                 <h3 className="text-lg font-semibold mb-4 text-white">Newsletter</h3>
-                 <p className="text-gray-400 mb-4 text-sm">Sign up for our newsletter to get the latest news and updates.</p>
-                 <form className="flex">
-                    <input type="email" placeholder="Your email" className="bg-[#2A2A32] text-white w-full py-2 px-4 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-600" />
-                    <button type="submit" className="bg-blue-600 text-white font-semibold px-4 rounded-r-lg hover:bg-blue-700 transition-colors">
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M3.105 2.289a.75.75 0 00-.826.95l1.414 4.925A1.5 1.5 0 005.135 9.25h6.115a.75.75 0 010 1.5H5.135a1.5 1.5 0 00-1.442 1.086L2.279 16.76a.75.75 0 00.95.826l14.5-5.25a.75.75 0 000-1.352L3.105 2.289z"></path></svg>
-                    </button>
-                 </form>
-            </div>
         </div>
-
-        <div className="py-6 border-t border-gray-700/50 flex flex-col sm:flex-row justify-between items-center text-sm">
-            <p className="text-gray-500">&copy; {new Date().getFullYear()} BANTConfirm. All rights reserved.</p>
-            <div className="flex space-x-6 mt-4 sm:mt-0">
-                <a href="#" className="text-gray-500 hover:text-white transition-colors">Terms of service</a>
-                <a href="#" className="text-gray-500 hover:text-white transition-colors">Privacy policy</a>
-            </div>
+        <div className="mt-12 border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+             &copy; {new Date().getFullYear()} BANTConfirm. All rights reserved.
         </div>
       </div>
     </footer>

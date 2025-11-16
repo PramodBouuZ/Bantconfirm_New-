@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { Product } from '../../types';
+import { Product, ProductCategory } from '../../types';
 
 interface ProductFormProps {
     product: Product | null;
+    categories: ProductCategory[];
     onSave: (product: Product | Omit<Product, 'id'>) => void;
     onCancel: () => void;
 }
 
-const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) => {
+const ProductForm: React.FC<ProductFormProps> = ({ product, categories, onSave, onCancel }) => {
     const [name, setName] = useState('');
     const [image, setImage] = useState('');
     const [price, setPrice] = useState('');
     const [priceUnit, setPriceUnit] = useState('');
     const [description, setDescription] = useState('');
     const [features, setFeatures] = useState('');
+    const [category, setCategory] = useState(categories[0]?.name || '');
     const [error, setError] = useState('');
 
     const isEditing = product !== null;
@@ -26,6 +28,7 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
             setPriceUnit(product.priceUnit || '');
             setDescription(product.description);
             setFeatures(product.features.join('\n'));
+            setCategory(product.category);
         }
     }, [product]);
 
@@ -43,8 +46,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
-        if (!name.trim() || !price.trim() || !description.trim()) {
-            setError('Name, Price, and Description are required.');
+        if (!name.trim() || !price.trim() || !description.trim() || !category) {
+            setError('Name, Price, Category, and Description are required.');
             return;
         }
 
@@ -56,7 +59,8 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
             price,
             priceUnit,
             description,
-            features: featuresArray
+            features: featuresArray,
+            category,
         };
 
         if (isEditing) {
@@ -96,6 +100,14 @@ const ProductForm: React.FC<ProductFormProps> = ({ product, onSave, onCancel }) 
                             <label htmlFor="priceUnit" className="block text-sm font-medium text-gray-700 mb-1">Price Unit</label>
                             <input type="text" id="priceUnit" value={priceUnit} onChange={(e) => setPriceUnit(e.target.value)} className="w-full px-4 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300" placeholder="e.g., / month"/>
                         </div>
+                    </div>
+                    <div>
+                        <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                        <select id="category" value={category} onChange={e => setCategory(e.target.value)} className="w-full px-4 py-2 border bg-white rounded-lg focus:ring-indigo-500 focus:border-indigo-500 border-gray-300">
+                           {categories.map(cat => (
+                               <option key={cat.id} value={cat.name}>{cat.name}</option>
+                           ))}
+                        </select>
                     </div>
                     <div>
                         <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">Description</label>

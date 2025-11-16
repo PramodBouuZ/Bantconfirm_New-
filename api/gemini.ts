@@ -25,6 +25,7 @@ interface LeadDetails {
   name: string;
   company: string;
   email: string;
+  mobile?: string;
   service: string;
 }
 
