@@ -79,7 +79,7 @@ const BantAssistant: React.FC<BantAssistantProps> = ({ leadDetails, onComplete }
         <p className="text-sm text-gray-500 text-center">Please answer a few questions to qualify your request.</p>
         
         {/* BANT Progress Indicator */}
-        <div className="mt-6 mb-10 px-2">
+        <div className="mt-6 mb-10 px-6 sm:px-2">
             <ol className="flex items-center">
                 {BANT_STAGES_ORDER.map((stage, index) => {
                     const isCompleted = currentStageIndex > index;
@@ -104,7 +104,7 @@ const BantAssistant: React.FC<BantAssistantProps> = ({ leadDetails, onComplete }
                                 <div className={indicatorClasses}>
                                     {isCompleted ? <CheckIcon /> : index + 1}
                                 </div>
-                                <p className={`absolute top-10 text-xs font-semibold text-center w-20 transition-colors duration-300 ${isCurrent ? 'text-indigo-600' : 'text-gray-500'}`}>
+                                <p className={`absolute top-10 text-xs font-semibold text-center transition-colors duration-300 ${isCurrent ? 'text-indigo-600' : 'text-gray-500'}`}>
                                     {stageName}
                                 </p>
                             </li>

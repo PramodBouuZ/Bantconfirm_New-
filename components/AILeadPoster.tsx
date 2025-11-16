@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { RequirementListing, User, ChatMessage, LeadPosterStage, DraftRequirement, ListingCategory } from '../types';
 import useLeadPosterAssistant, { LEAD_POSTER_STAGES_ORDER } from '../hooks/useLeadPosterAssistant';
@@ -82,7 +83,7 @@ const AILeadPoster: React.FC<AILeadPosterProps> = ({ onComplete, currentUser }) 
         <h2 className="text-xl font-bold text-gray-900 text-center">AI Requirement Assistant</h2>
         <p className="text-sm text-gray-500 text-center">Let's work together to post your new lead on the marketplace.</p>
         
-        <div className="mt-6 mb-10 px-2">
+        <div className="mt-6 mb-10 px-6 sm:px-2">
             <ol className="flex items-center">
                 {stages.map((stage, index) => {
                     const isCompleted = currentStageIndex > index;
@@ -98,7 +99,7 @@ const AILeadPoster: React.FC<AILeadPosterProps> = ({ onComplete, currentUser }) 
                                 <div className={indicatorClasses}>
                                     {isCompleted ? <CheckIcon /> : index + 1}
                                 </div>
-                                <p className={`absolute top-10 text-xs font-semibold text-center w-20 transition-colors duration-300 ${isCurrent ? 'text-blue-600' : 'text-gray-500'}`}>
+                                <p className={`absolute top-10 text-xs font-semibold text-center transition-colors duration-300 ${isCurrent ? 'text-blue-600' : 'text-gray-500'}`}>
                                     {stageName}
                                 </p>
                             </li>
