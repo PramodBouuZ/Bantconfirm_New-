@@ -38,6 +38,13 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
     const [searchTerm, setSearchTerm] = useState('');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [wordIndex, setWordIndex] = useState(0);
+    
+    const productsByService = useMemo(() => {
+        return services.map(service => {
+            const count = products.filter(product => product.tags?.includes(service.name) || product.name.includes(service.name) || product.description.includes(service.name)).length;
+            return { ...service, itemCount: count };
+        })
+    }, [services, products]);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
@@ -65,8 +72,12 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
     return (
         <div className="bg-white">
             {/* Hero Section */}
-            <section className="relative text-gray-800 flex flex-col justify-center text-center overflow-hidden min-h-[70vh] md:min-h-[60vh] bg-gradient-to-b from-blue-50 to-white">
-                 <div className="absolute -bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-blue-100 rounded-full opacity-50 blur-2xl"></div>
+            <section className="relative text-gray-800 flex flex-col justify-center text-center overflow-hidden min-h-[60vh] bg-gradient-to-b from-blue-50 to-white">
+                 <div className="absolute inset-0 z-0 overflow-hidden">
+                    <svg className="absolute w-full h-full text-blue-300/60" fill="none" viewBox="0 0 1440 640" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M-133 51.5C108.833 241.5 303.9 675.5 683 403.5C1062.1 131.5 1339.83 241.5 1515 51.5" stroke="currentColor" strokeWidth="4" strokeLinecap="round"/>
+                    </svg>
+                 </div>
                 <div className="relative z-10 p-4 flex-grow flex flex-col items-center justify-center">
                     <h1 className="text-4xl md:text-5xl font-extrabold mb-4 leading-tight text-gray-900">
                         The Premier Marketplace for AI-Qualified<br/>
@@ -105,12 +116,12 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                             <ChevronLeft />
                         </button>
                         <div ref={scrollContainerRef} className="flex space-x-4 overflow-x-auto pb-4 scrollbar-hide">
-                            {services.map(service => (
+                            {productsByService.map(service => (
                                  <div key={service.name} className="flex-shrink-0 w-48">
                                     <ServiceCard
                                         name={service.name}
                                         icon={service.icon}
-                                        itemCount={0}
+                                        itemCount={service.itemCount}
                                         onSelect={() => onSelectService(service)}
                                     />
                                  </div>
