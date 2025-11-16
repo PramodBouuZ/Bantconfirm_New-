@@ -32,7 +32,7 @@ export const PRODUCTS_DATA: Product[] = [
     description: 'Comprehensive security for small and medium businesses.',
     features: ['Firewall Management', 'Endpoint Protection', 'Threat Detection', 'Security Audits'],
     author: 'BANTConfirm',
-    category: 'Telco',
+    category: 'IT',
   },
   {
     id: 4,
@@ -52,6 +52,6 @@ export const PRODUCTS_DATA: Product[] = [
     description: 'Managed IT support to keep your business running smoothly.',
     features: ['24/7 Monitoring', 'Helpdesk Support', 'Network Management', 'On-site Visits'],
     author: 'BANTConfirm',
-    category: 'Telco',
+    category: 'IT',
   },
 ];
