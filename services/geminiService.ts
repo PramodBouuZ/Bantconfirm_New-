@@ -1,164 +1,67 @@
 import { BantStage, ChatMessage, GeminiResponse, LeadDetails, AIRecommendation, Vendor, Service, RequirementListing, AIMatch, QualifiedLead, User, LeadPosterStage } from '../types';
 
-/**
- * All functions now call the `/api/gemini` serverless function,
- * which securely handles the interaction with the Google GenAI API.
- * The payload is structured with a `type` to indicate which operation
- * the backend should perform.
- */
+// Centralized API call handler
+const callGeminiApi = async (type: string, payload: any) => {
+    try {
+        const response = await fetch('/api/gemini', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ type, payload }),
+        });
 
-export const qualifyLead = async (
+        if (!response.ok) {
+            let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+            try {
+                // Try to parse a more specific error message from the response body
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                // Response body is not JSON or is empty, stick with the status text
+            }
+            console.error(`API error from backend for type "${type}":`, errorMessage);
+            throw new Error(errorMessage);
+        }
+
+        return await response.json();
+    } catch (error) {
+        console.error(`Error in callGeminiApi for type "${type}":`, error);
+        // Re-throw the error to be handled by the calling function.
+        // This makes sure network errors (e.g., fetch failing itself) are also propagated.
+        throw error;
+    }
+};
+
+
+export const qualifyLead = (
   userInput: string,
   stage: BantStage,
   history: ChatMessage[],
   leadDetails: LeadDetails
 ): Promise<GeminiResponse> => {
-  try {
-    const response = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        type: 'qualifyLead',
-        payload: { userInput, stage, history, leadDetails },
-      }),
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json();
-        console.error("API error from backend:", errorData.error);
-        throw new Error(`API error: ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error calling backend API for qualifyLead:', error);
-    // Fallback in case of API error
-    return {
-      analysis: "I'm having a little trouble processing that.",
-      extractedData: "N/A",
-      isStageComplete: false,
-      nextQuestion: "Could you please rephrase your response?",
-    };
-  }
+  return callGeminiApi('qualifyLead', { userInput, stage, history, leadDetails });
 };
 
 
-export const findSolution = async (query: string, services: Service[], vendors: Vendor[]): Promise<AIRecommendation> => {
-    try {
-        const response = await fetch('/api/gemini', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                type: 'findSolution',
-                payload: { query, services, vendors },
-            }),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("API error from backend:", errorData.error);
-            throw new Error(`API error: ${response.statusText}`);
-        }
-
-        return await response.json();
-
-    } catch (error) {
-        console.error("Error calling backend API for solution finding:", error);
-        return {
-            summary: "I encountered an issue while analyzing your request. Please try rephrasing or be more specific about your needs.",
-            suggestedService: null,
-            suggestedVendors: [],
-        };
-    }
+export const findSolution = (query: string, services: Service[], vendors: Vendor[]): Promise<AIRecommendation> => {
+    return callGeminiApi('findSolution', { query, services, vendors });
 };
 
 
-export const matchVendorsToListing = async (listing: RequirementListing, vendors: Vendor[]): Promise<AIMatch[]> => {
-    try {
-        const response = await fetch('/api/gemini', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                type: 'matchVendors',
-                payload: { listing, vendors },
-            }),
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("API error from backend:", errorData.error);
-            throw new Error(`API error: ${response.statusText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error("Error calling backend API for vendor matching:", error);
-        return [];
-    }
+export const matchVendorsToListing = (listing: RequirementListing, vendors: Vendor[]): Promise<AIMatch[]> => {
+    return callGeminiApi('matchVendors', { listing, vendors });
 };
 
-export const matchVendorsToLead = async (lead: QualifiedLead, vendors: Vendor[]): Promise<string[]> => {
-    try {
-        const response = await fetch('/api/gemini', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                type: 'matchVendorsToLead',
-                payload: { lead, vendors },
-            }),
-        });
-        
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("API error from backend:", errorData.error);
-            throw new Error(`API error: ${response.statusText}`);
-        }
-
-        return await response.json();
-    } catch (error) {
-        console.error("Error calling backend API for lead-vendor matching:", error);
-        return []; // Return empty array on failure
-    }
+export const matchVendorsToLead = (lead: QualifiedLead, vendors: Vendor[]): Promise<string[]> => {
+    return callGeminiApi('matchVendorsToLead', { lead, vendors });
 };
 
-export const generateRequirementWithAI = async (
+export const generateRequirementWithAI = (
   userInput: string,
   stage: LeadPosterStage,
   history: ChatMessage[],
   currentUser: User,
 ) => {
-  try {
-    const response = await fetch('/api/gemini', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        type: 'generateRequirement',
-        payload: { userInput, stage, history, currentUser },
-      }),
-    });
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error("API error from backend:", errorData.error);
-      throw new Error(`API error: ${response.statusText}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error calling backend API for generateRequirement:', error);
-    return {
-      analysis: "I'm having trouble processing that. Please try again.",
-      extractedTitle: "",
-      extractedDescription: "",
-      extractedCategory: "",
-      isComplete: false,
-      nextQuestion: "Could you please rephrase your response?",
-    };
-  }
+  return callGeminiApi('generateRequirement', { userInput, stage, history, currentUser });
 };

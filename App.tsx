@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
@@ -351,28 +352,41 @@ const App: React.FC = () => {
       );
 
       // Trigger AI matching in the background
-      const matchedVendorNames = await matchVendorsToLead(newLead, vendors);
-      
-      // Update the lead with AI matches
-      setQualifiedLeads(prev => prev.map(l => {
-        if (l.id === newLead.id) {
-          const newHistoryEntry: AssignmentHistoryEntry = {
-            assignedAt: new Date().toISOString(),
-            vendorNames: matchedVendorNames,
-          };
-          handleAssignVendorsToLead(newLead.id, matchedVendorNames); // Use the handler to also send notifications
-          return {
-            ...l,
-            status: 'Assigned',
-            assignedVendorNames: matchedVendorNames,
-            assignmentHistory: [newHistoryEntry],
-          };
-        }
-        return l;
-      }));
-      
-      setLastMatchedVendors(matchedVendorNames);
-      setIsLeadMatching(false);
+      try {
+        const matchedVendorNames = await matchVendorsToLead(newLead, vendors);
+        
+        // Update the lead with AI matches
+        setQualifiedLeads(prev => prev.map(l => {
+          if (l.id === newLead.id) {
+            const newHistoryEntry: AssignmentHistoryEntry = {
+              assignedAt: new Date().toISOString(),
+              vendorNames: matchedVendorNames,
+            };
+            handleAssignVendorsToLead(newLead.id, matchedVendorNames); // Use the handler to also send notifications
+            return {
+              ...l,
+              status: 'Assigned',
+              assignedVendorNames: matchedVendorNames,
+              assignmentHistory: [newHistoryEntry],
+            };
+          }
+          return l;
+        }));
+        
+        setLastMatchedVendors(matchedVendorNames);
+      } catch (error) {
+        console.error("Failed to match vendors for lead:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        setToast({
+            id: Date.now(),
+            message: `AI vendor matching failed: ${errorMessage}`,
+            timestamp: new Date().toISOString(),
+            read: false,
+        });
+        setLastMatchedVendors([]); // Indicate failure with empty array
+      } finally {
+        setIsLeadMatching(false);
+      }
     }
     
     localStorage.removeItem('bant_conversation');
@@ -437,10 +451,23 @@ const App: React.FC = () => {
     setCurrentView(currentUser ? AppView.DASHBOARD : AppView.LISTINGS_MARKETPLACE);
     setIsMatching(true);
 
-    const matches = await matchVendorsToListing(newListing, vendors);
-    
-    setListings(prev => prev.map(l => l.id === newListing.id ? { ...l, aiMatches: matches } : l));
-    setIsMatching(false);
+    try {
+      const matches = await matchVendorsToListing(newListing, vendors);
+      setListings(prev => prev.map(l => l.id === newListing.id ? { ...l, aiMatches: matches } : l));
+    } catch (error) {
+        console.error("Failed to match vendors for listing:", error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        setToast({
+            id: Date.now(),
+            message: `AI vendor matching failed: ${errorMessage}`,
+            timestamp: new Date().toISOString(),
+            read: false,
+        });
+        // Still update the listing but with empty matches to indicate failure
+        setListings(prev => prev.map(l => l.id === newListing.id ? { ...l, aiMatches: [] } : l));
+    } finally {
+        setIsMatching(false);
+    }
   };
   
   const handleDeleteListing = (listingId: number) => {

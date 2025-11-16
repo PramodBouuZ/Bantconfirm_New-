@@ -111,7 +111,8 @@ const useLeadPosterAssistant = (currentUser: User) => {
 
     } catch (error) {
       console.error('Error generating requirement:', error);
-      addMessage('ai', 'I seem to be having some trouble. Could you please try rephrasing?');
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      addMessage('ai', `I'm sorry, an error occurred: "${errorMessage}". Please try rephrasing your answer or try again later.`);
     } finally {
       setIsLoading(false);
     }

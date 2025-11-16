@@ -1,5 +1,6 @@
 
 
+
 import { useState, useEffect, useCallback } from 'react';
 import { ChatMessage, LeadDetails, BantStage, BantData, StoredConversation } from '../types';
 import { qualifyLead } from '../services/geminiService';
@@ -99,7 +100,8 @@ const useBantAssistant = (leadDetails: LeadDetails) => {
 
     } catch (error) {
       console.error('Error qualifying lead:', error);
-      addMessage('ai', 'I seem to be having some trouble. Could you please try rephrasing your answer?');
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      addMessage('ai', `I'm sorry, an error occurred: "${errorMessage}". Please try rephrasing your answer or try again later.`);
     } finally {
       setIsLoading(false);
     }

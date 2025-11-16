@@ -24,9 +24,15 @@ const AISolutionFinder: React.FC<AISolutionFinderProps> = ({ onSelectService, se
     setError('');
     setIsLoading(true);
     setRecommendation(null);
-    const result = await findSolution(query, services, vendors);
-    setRecommendation(result);
-    setIsLoading(false);
+    try {
+        const result = await findSolution(query, services, vendors);
+        setRecommendation(result);
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        setError(`Failed to find a solution: ${errorMessage}. Please try again.`);
+    } finally {
+        setIsLoading(false);
+    }
   };
   
   const recommendedVendors = vendors.filter(v => recommendation?.suggestedVendors.includes(v.name));
