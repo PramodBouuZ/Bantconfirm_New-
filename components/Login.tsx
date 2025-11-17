@@ -1,17 +1,16 @@
 
 
+
 import React, { useState } from 'react';
 import { User, TeamMember } from '../types';
 
 interface LoginProps {
   onLogin: (user: User | TeamMember) => void;
-  onSwitchToSignup: () => void;
-  onForgotPassword: () => void;
   users: User[];
   teamMembers: TeamMember[];
 }
 
-const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPassword, users, teamMembers }) => {
+const Login: React.FC<LoginProps> = ({ onLogin, users, teamMembers }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -69,13 +68,12 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPasswo
         </div>
         
         <div className="flex items-center justify-end">
-            <button
-                type="button"
-                onClick={onForgotPassword}
+            <a
+                href="/forgot-password"
                 className="text-sm font-medium text-blue-600 hover:text-blue-500"
             >
                 Forgot password?
-            </button>
+            </a>
         </div>
 
         {error && <p className="text-red-500 text-xs mt-1 text-center">{error}</p>}
@@ -89,9 +87,9 @@ const Login: React.FC<LoginProps> = ({ onLogin, onSwitchToSignup, onForgotPasswo
       </form>
       <p className="text-center text-sm text-gray-600 mt-6">
         Don't have an account?{' '}
-        <button onClick={onSwitchToSignup} className="font-semibold text-blue-600 hover:text-blue-500">
+        <a href="/signup" className="font-semibold text-blue-600 hover:text-blue-500">
           Sign Up
-        </button>
+        </a>
       </p>
     </div>
   );

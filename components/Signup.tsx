@@ -1,13 +1,13 @@
 
+
 import React, { useState } from 'react';
 import { User } from '../types';
 
 interface SignupProps {
   onSignup: (user: Omit<User, 'id'>) => void;
-  onSwitchToLogin: () => void;
 }
 
-const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
+const Signup: React.FC<SignupProps> = ({ onSignup }) => {
   const [name, setName] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [email, setEmail] = useState('');
@@ -67,9 +67,9 @@ const Signup: React.FC<SignupProps> = ({ onSignup, onSwitchToLogin }) => {
       </form>
        <p className="text-center text-sm text-gray-600 mt-6">
         Already have an account?{' '}
-        <button onClick={onSwitchToLogin} className="font-semibold text-blue-600 hover:text-blue-500">
+        <a href="/login" className="font-semibold text-blue-600 hover:text-blue-500">
           Log In
-        </button>
+        </a>
       </p>
     </div>
   );

@@ -1,13 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { AppView, User, Notification, TeamMember, TeamRole } from '../types';
+import { User, Notification, TeamMember, TeamRole } from '../types';
 import { BellIcon } from './icons/BellIcon';
 import NotificationsDropdown from './NotificationsDropdown';
 import { MenuIcon } from './icons/MenuIcon';
 import { XIcon } from './icons/XIcon';
 
 interface HeaderProps {
-  onNav: (view: AppView) => void;
   currentUser: User | TeamMember | null;
   onLogout: () => void;
   notifications: Notification[];
@@ -21,7 +20,7 @@ const UserCircleIcon = () => (
     </svg>
 );
 
-const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notifications, onMarkNotificationsAsRead, logo }) => {
+const Header: React.FC<HeaderProps> = ({ currentUser, onLogout, notifications, onMarkNotificationsAsRead, logo }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -29,11 +28,6 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
   
   const isTeamMember = currentUser && 'role' in currentUser;
   const isAdmin = isTeamMember && (currentUser as TeamMember).role === TeamRole.Admin;
-
-  const handleMobileNav = (view: AppView) => {
-    onNav(view);
-    setIsMobileMenuOpen(false);
-  };
 
   const handleToggleNotifications = () => {
     setIsNotificationsOpen(prev => {
@@ -57,10 +51,10 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
     };
   }, [notificationsRef]);
   
-  const getDashboardView = () => {
-    if (!currentUser) return AppView.HOME;
-    if (isTeamMember) return AppView.ADMIN_DASHBOARD;
-    return AppView.DASHBOARD;
+  const getDashboardPath = () => {
+    if (!currentUser) return "/";
+    if (isTeamMember) return "/admin";
+    return "/dashboard";
   };
 
   return (
@@ -68,9 +62,9 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <div className="flex items-center">
-            <div 
+            <a 
+              href="/"
               className="cursor-pointer"
-              onClick={() => onNav(AppView.HOME)}
             >
               {logo ? (
                 <img src={logo} alt="BANTConfirm Logo" className="h-10 w-auto" />
@@ -79,21 +73,21 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
                   <span className="text-blue-600">BANT</span><span className="text-amber-500">Confirm</span>
                 </div>
               )}
-            </div>
+            </a>
             <nav className="hidden lg:flex items-center space-x-8 ml-10">
-                <button onClick={() => onNav(AppView.HOME)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">Home</button>
-                <button onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">Products</button>
-                <button onClick={() => onNav(AppView.ABOUT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">About</button>
-                <button onClick={() => onNav(AppView.CONTACT)} className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer bg-transparent border-none p-0">Contact</button>
+                <a href="/" className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Home</a>
+                <a href="/products" className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Products</a>
+                <a href="/about" className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">About</a>
+                <a href="/contact" className="text-gray-600 hover:text-gray-900 font-medium transition-colors cursor-pointer">Contact</a>
             </nav>
           </div>
           
           <div className="flex items-center space-x-2 sm:space-x-4">
             {currentUser ? (
               <>
-                 <button onClick={() => onNav(getDashboardView())} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none transition-colors">
+                 <a href={getDashboardPath()} className="p-2 rounded-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 focus:outline-none transition-colors">
                     <UserCircleIcon />
-                 </button>
+                 </a>
                 {isAdmin && (
                   <div className="relative" ref={notificationsRef}>
                     <button
@@ -123,18 +117,18 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
               </>
             ) : (
               <div className="hidden sm:flex items-center space-x-4">
-                <button
-                  onClick={() => onNav(AppView.LOGIN)}
+                <a
+                  href="/login"
                   className="text-gray-700 font-semibold py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors duration-300"
                 >
                   Login
-                </button>
-                <button
-                  onClick={() => onNav(AppView.SIGNUP)}
+                </a>
+                <a
+                  href="/signup"
                   className="bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-sm"
                 >
                   Signup
-                </button>
+                </a>
               </div>
             )}
              <div className="lg:hidden">
@@ -150,27 +144,27 @@ const Header: React.FC<HeaderProps> = ({ onNav, currentUser, onLogout, notificat
         </div>
       </div>
        {/* Mobile Menu */}
-      <div className={`lg:hidden bg-white border-t border-gray-200 ${isMobileMenuOpen ? 'block' : 'hidden'}`}>
+      <div className={`lg:hidden bg-white border-t border-gray-200 ${isMobileMenuOpen ? 'block' : 'hidden'}`} onClick={() => setIsMobileMenuOpen(false)}>
           <nav className="flex flex-col p-4 space-y-2">
-            <button onClick={() => handleMobileNav(AppView.HOME)} className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">Home</button>
-            <button onClick={() => handleMobileNav(AppView.LISTINGS_MARKETPLACE)} className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">Products</button>
-            <button onClick={() => handleMobileNav(AppView.ABOUT)} className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">About</button>
-            <button onClick={() => handleMobileNav(AppView.CONTACT)} className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">Contact</button>
+            <a href="/" className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">Home</a>
+            <a href="/products" className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">Products</a>
+            <a href="/about" className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">About</a>
+            <a href="/contact" className="text-left text-gray-700 hover:text-gray-900 font-medium py-2 px-3 rounded-md hover:bg-gray-100">Contact</a>
             
             {!currentUser && (
                 <div className="pt-4 mt-4 border-t border-gray-200 flex flex-col space-y-2">
-                     <button
-                        onClick={() => handleMobileNav(AppView.LOGIN)}
+                     <a
+                        href="/login"
                         className="w-full text-center text-gray-700 font-semibold py-2 px-4 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors duration-300"
                     >
                         Login
-                    </button>
-                    <button
-                        onClick={() => handleMobileNav(AppView.SIGNUP)}
+                    </a>
+                    <a
+                        href="/signup"
                         className="w-full text-center bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-sm"
                     >
                         Signup
-                    </button>
+                    </a>
                 </div>
             )}
             {currentUser && (

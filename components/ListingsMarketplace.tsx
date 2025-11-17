@@ -1,20 +1,24 @@
 
 
-import React, { useState, useMemo } from 'react';
+
+import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '../types';
 import ProductCard from './ProductCard';
 
 interface ListingsMarketplaceProps {
   products: Product[];
-  onPostRequirement: () => void;
   onSelectProduct: (product: Product) => void;
   onBookDemo: (product: Product) => void;
-  initialSearchTerm?: string | null;
+  initialSearchTerm?: string;
 }
 
-const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onPostRequirement, onSelectProduct, onBookDemo, initialSearchTerm }) => {
+const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onSelectProduct, onBookDemo, initialSearchTerm }) => {
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm || '');
     
+    useEffect(() => {
+        setSearchTerm(initialSearchTerm || '');
+    }, [initialSearchTerm]);
+
     const filteredProducts = useMemo(() => {
         return products.filter(product => {
             return searchTerm.trim() === '' ||
@@ -29,12 +33,12 @@ const ListingsMarketplace: React.FC<ListingsMarketplaceProps> = ({ products, onP
             <div className="text-center mb-12">
                 <h1 className="text-4xl font-bold text-gray-900">Product Catalog</h1>
                 <p className="text-lg text-gray-600 mt-2 max-w-2xl mx-auto">Explore our curated selection of top-tier solutions designed to elevate your business.</p>
-                <button
-                    onClick={onPostRequirement}
-                    className="mt-6 bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 transform hover:scale-105 shadow-md"
+                <a
+                    href="/post-requirement"
+                    className="mt-6 inline-block bg-indigo-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-indigo-700 transition-colors duration-300 transform hover:scale-105 shadow-md"
                 >
                     Post a Custom Requirement
-                </button>
+                </a>
             </div>
 
              <div className="flex flex-col md:flex-row gap-8">

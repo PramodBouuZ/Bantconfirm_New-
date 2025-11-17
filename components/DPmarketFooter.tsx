@@ -1,15 +1,14 @@
 import React from 'react';
-import { AppView } from '../types';
 
+// FIX: The AppView enum does not exist. This component has been refactored to use standard href links for navigation, consistent with the rest of the application. The unused onNav prop and its related types have been removed.
 interface FooterProps {
-  onNav: (view: AppView) => void;
 }
 
-const Footer: React.FC<FooterProps> = ({ onNav }) => {
+const Footer: React.FC<FooterProps> = () => {
     
-    const FooterLink: React.FC<{view: AppView; label: string}> = ({ view, label }) => (
+    const FooterLink: React.FC<{href: string; label: string}> = ({ href, label }) => (
         <li>
-            <a onClick={() => onNav(view)} className="text-gray-400 hover:text-white transition-colors cursor-pointer">{label}</a>
+            <a href={href} className="text-gray-400 hover:text-white transition-colors cursor-pointer">{label}</a>
         </li>
     );
 
@@ -30,17 +29,17 @@ const Footer: React.FC<FooterProps> = ({ onNav }) => {
             <div>
                 <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
                 <ul className="space-y-2 text-sm">
-                    <FooterLink view={AppView.HOME} label="Home" />
-                    <FooterLink view={AppView.ABOUT} label="About Us" />
-                    <FooterLink view={AppView.CONTACT} label="Contact" />
-                    <FooterLink view={AppView.FAQ} label="FAQ" />
+                    <FooterLink href="/" label="Home" />
+                    <FooterLink href="/about" label="About Us" />
+                    <FooterLink href="/contact" label="Contact" />
+                    <FooterLink href="/faq" label="FAQ" />
                 </ul>
             </div>
              <div>
                 <h3 className="text-lg font-semibold mb-4">For Partners</h3>
                 <ul className="space-y-2 text-sm">
-                   <FooterLink view={AppView.BECOME_VENDOR} label="Become a Vendor" />
-                   <FooterLink view={AppView.LOGIN} label="Vendor Login" />
+                   <FooterLink href="/become-a-vendor" label="Become a Vendor" />
+                   <FooterLink href="/login" label="Vendor Login" />
                 </ul>
             </div>
             {/* Contact */}

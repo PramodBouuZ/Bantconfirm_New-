@@ -1,6 +1,8 @@
 
+
+
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Product, Service, AppView, Vendor, User, TeamMember } from '../types';
+import { Product, Service, Vendor, User, TeamMember } from '../types';
 import ProductCard from './ProductCard';
 import ServiceCard from './ServiceCard';
 import VendorLogos from './VendorLogos';
@@ -14,11 +16,11 @@ interface HomePageProps {
   onSelectProduct: (product: Product) => void;
   onSelectService: (service: Service) => void;
   onBookDemo: (product: Product) => void;
-  onNav: (view: AppView) => void;
   onGetQuote: (serviceName?: string) => void;
   onPostRequirement: () => void;
   onSearch: (term: string) => void;
   currentUser: User | TeamMember | null;
+  navigate: (path: string) => void;
 }
 
 const animatedWords = ["IT Leads", "Software Deals", "Cloud Solutions", "Telco Needs"];
@@ -35,7 +37,7 @@ const ChevronRight: React.FC<{className?: string}> = ({ className }) => (
     </svg>
 );
 
-const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSelectProduct, onSelectService, onBookDemo, onNav, onGetQuote, onPostRequirement, onSearch, currentUser }) => {
+const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSelectProduct, onSelectService, onBookDemo, onGetQuote, onPostRequirement, onSearch, currentUser, navigate }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [wordIndex, setWordIndex] = useState(0);
@@ -143,13 +145,13 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                     <div className="flex items-center gap-4 mb-8">
                         <h2 className="text-3xl font-bold text-gray-900">New Arrival Products</h2>
                         {isTeamMember && (
-                            <button
-                                onClick={() => onNav(AppView.ADMIN_DASHBOARD)}
+                            <a
+                                href="/admin"
                                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 bg-gray-200 hover:bg-blue-50 py-1 px-3 rounded-full transition-colors"
                                 title="Go to Admin Panel to manage products"
                             >
                                 <EditIcon /> Manage
-                            </button>
+                            </a>
                         )}
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -158,7 +160,7 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                         ))}
                     </div>
                     <div className="text-center mt-12">
-                      <button onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors">View All Products</button>
+                      <a href="/products" className="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors">View All Products</a>
                     </div>
                 </div>
             </section>
@@ -169,13 +171,13 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                      <div className="flex items-center gap-4 mb-8">
                         <h2 className="text-3xl font-bold text-gray-900">Featured IT Solutions</h2>
                         {isTeamMember && (
-                            <button
-                                onClick={() => onNav(AppView.ADMIN_DASHBOARD)}
+                            <a
+                                href="/admin"
                                 className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 py-1 px-3 rounded-full transition-colors"
                                 title="Go to Admin Panel to manage products"
                             >
                                 <EditIcon /> Manage
-                            </button>
+                            </a>
                         )}
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -193,16 +195,16 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                         <div className="flex items-center gap-4">
                             <h2 className="text-3xl font-bold">Telco Products & Services</h2>
                             {isTeamMember && (
-                                <button
-                                    onClick={() => onNav(AppView.ADMIN_DASHBOARD)}
+                                <a
+                                    href="/admin"
                                     className="flex items-center gap-2 text-sm text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 py-1 px-3 rounded-full transition-colors"
                                     title="Go to Admin Panel to manage products"
                                 >
                                     <EditIcon /> Manage
-                                </button>
+                                </a>
                             )}
                         </div>
-                        <button onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="bg-blue-600 font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">View All Items</button>
+                        <a href="/products" className="bg-blue-600 font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">View All Items</a>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {telcoProducts.map(product => (
@@ -220,7 +222,7 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                     <div className="bg-blue-50 border border-blue-200 p-8 rounded-2xl shadow-sm">
                         <h3 className="text-2xl font-bold text-gray-900">Pay-Per-Success AI Lead Generation</h3>
                         <p className="text-gray-600 mt-2">Join our marketplace and receive AI-qualified leads that are ready for engagement. You only pay a success fee when you close a deal, making it a risk-free channel for business growth.</p>
-                        <button onClick={() => onNav(AppView.BECOME_VENDOR)} className="mt-6 bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Become a Vendor</button>
+                        <a href="/become-a-vendor" className="mt-6 inline-block bg-blue-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">Become a Vendor</a>
                     </div>
                      <div className="bg-amber-50 border border-amber-200 p-8 rounded-2xl shadow-sm">
                         <h3 className="text-2xl font-bold text-gray-900">Earn Up to 10% Commission</h3>
@@ -241,9 +243,9 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
                                 <p className="text-gray-600 mt-1">Wanna talk? Send us a message</p>
                             </div>
                         </div>
-                        <button onClick={() => onNav(AppView.CONTACT)} className="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0">
+                        <a href="/contact" className="bg-blue-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-blue-700 transition-colors flex-shrink-0">
                            support@bantconfirm.com
-                        </button>
+                        </a>
                     </div>
                  </div>
             </section>

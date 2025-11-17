@@ -1,13 +1,12 @@
 
 
+
 import React from 'react';
-import { AppView } from '../types';
 import { LinkedInIcon } from './icons/LinkedInIcon';
 import { InstagramIcon } from './icons/InstagramIcon';
 import { FacebookIcon } from './icons/FacebookIcon';
 
 interface FooterProps {
-  onNav: (view: AppView) => void;
   socialLinks: {
     linkedin: string;
     instagram: string;
@@ -16,24 +15,14 @@ interface FooterProps {
   logo?: string;
 }
 
-const Footer: React.FC<FooterProps> = ({ onNav, socialLinks, logo }) => {
+const Footer: React.FC<FooterProps> = ({ socialLinks, logo }) => {
     
-    const FooterLink: React.FC<{view?: AppView; href?: string; label: string}> = ({ view, href, label }) => {
-        const commonClasses = "text-gray-400 hover:text-white transition-colors cursor-pointer text-left w-full bg-transparent border-none p-0";
-
-        const content = view ? (
-             <button onClick={() => onNav(view)} className={commonClasses}>
-                {label}
-            </button>
-        ) : (
-            <a href={href || '#'} className={commonClasses}>
-              {label}
-            </a>
-        );
-
+    const FooterLink: React.FC<{href: string; label: string}> = ({ href, label }) => {
         return (
             <li className="mb-2">
-                {content}
+                <a href={href} className="text-gray-400 hover:text-white transition-colors">
+                    {label}
+                </a>
             </li>
         );
     };
@@ -44,7 +33,7 @@ const Footer: React.FC<FooterProps> = ({ onNav, socialLinks, logo }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {/* About Section */}
             <div className="lg:col-span-1">
-                 <div className="mb-4 cursor-pointer" onClick={() => onNav(AppView.HOME)}>
+                 <a href="/" className="mb-4 inline-block">
                     {logo ? (
                       <img src={logo} alt="BANTConfirm Logo" className="h-10 w-auto" />
                     ) : (
@@ -52,7 +41,7 @@ const Footer: React.FC<FooterProps> = ({ onNav, socialLinks, logo }) => {
                           <span className="text-blue-400">BANT</span><span className="text-amber-400">Confirm</span>
                       </h3>
                     )}
-                </div>
+                </a>
                 <p className="text-gray-400 text-sm leading-relaxed max-w-md mb-6">
                    The intelligent B2B marketplace for AI-qualified IT and software leads.
                 </p>
@@ -67,16 +56,16 @@ const Footer: React.FC<FooterProps> = ({ onNav, socialLinks, logo }) => {
             <div>
                 <h3 className="text-lg font-semibold mb-4 tracking-wider uppercase">Company</h3>
                 <ul className="space-y-1 text-sm">
-                    <FooterLink view={AppView.ABOUT} label="About Us" />
-                    <FooterLink view={AppView.CONTACT} label="Contact" />
-                    <FooterLink view={AppView.FAQ} label="FAQ" />
+                    <FooterLink href="/about" label="About Us" />
+                    <FooterLink href="/contact" label="Contact" />
+                    <FooterLink href="/faq" label="FAQ" />
                 </ul>
             </div>
             <div>
                 <h3 className="text-lg font-semibold mb-4 tracking-wider uppercase">For Partners</h3>
                 <ul className="space-y-1 text-sm">
-                   <FooterLink view={AppView.BECOME_VENDOR} label="Become a Vendor" />
-                   <FooterLink view={AppView.LOGIN} label="Vendor Login" />
+                   <FooterLink href="/become-a-vendor" label="Become a Vendor" />
+                   <FooterLink href="/login" label="Vendor Login" />
                 </ul>
             </div>
              <div>

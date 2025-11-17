@@ -1,7 +1,8 @@
 
 
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
+import { BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import LeadForm from './components/LeadForm';
@@ -35,15 +36,15 @@ import ForgotPassword from './components/ForgotPassword';
 import { CATEGORIES_DATA } from './data/categories';
 import { whatsAppService } from './services/whatsappService';
 
+const slugify = (text: string) => text.toLowerCase().replace(/&/g, 'and').replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
 
 const App: React.FC = () => {
-  const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
+  const [pathname, setPathname] = useState(window.location.pathname);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [bookingProduct, setBookingProduct] = useState<Product | null>(null);
   const [leadDetails, setLeadDetails] = useState<LeadDetails | null>(null);
   const [bantData, setBantData] = useState<BantData | null>(null);
-  const [initialServiceForForm, setInitialServiceForForm] = useState<string | undefined>();
   const [isMatching, setIsMatching] = useState(false);
   const [savedConversation, setSavedConversation] = useState<StoredConversation | null>(null);
   const [savedLeadPosterConversation, setSavedLeadPosterConversation] = useState<StoredLeadPosterConversation | null>(null);
@@ -53,7 +54,6 @@ const App: React.FC = () => {
   const [highlightedListingId, setHighlightedListingId] = useState<number | null>(null);
   const [isLeadMatching, setIsLeadMatching] = useState(false);
   const [lastMatchedVendors, setLastMatchedVendors] = useState<string[] | null>(null);
-  const [initialMarketplaceSearch, setInitialMarketplaceSearch] = useState<string | null>(null);
 
 
   // --- Persisted State ---
@@ -192,6 +192,37 @@ const App: React.FC = () => {
     });
   }, [products, listings]);
 
+  // Routing Logic
+  const navigate = (path: string, replace = false) => {
+      if (replace) {
+          window.history.replaceState({}, '', path);
+      } else {
+          window.history.pushState({}, '', path);
+      }
+      setPathname(path);
+  };
+
+  useEffect(() => {
+      const onPopState = () => setPathname(window.location.pathname);
+      window.addEventListener('popstate', onPopState);
+      return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  useEffect(() => {
+      const handleLinkClick = (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          const anchor = target.closest('a');
+          if (anchor && anchor.target !== '_blank' && anchor.origin === window.location.origin) {
+              e.preventDefault();
+              const newPath = anchor.pathname + anchor.search + anchor.hash;
+              if (newPath !== window.location.pathname) {
+                  navigate(newPath);
+              }
+          }
+      };
+      document.body.addEventListener('click', handleLinkClick);
+      return () => document.body.removeEventListener('click', handleLinkClick);
+  }, []);
 
   useEffect(() => {
     try {
@@ -220,7 +251,7 @@ const App: React.FC = () => {
     } catch (error) {
       console.error("Failed to load a conversation from localStorage", error);
     }
-  }, [currentView]); // Reload when view changes, e.g., after login.
+  }, []); // Only run on initial mount
 
   useEffect(() => {
     // Handle deep linking for shared listings on initial load
@@ -231,19 +262,10 @@ const App: React.FC = () => {
       const foundListing = listings.find(l => l.id === listingId);
       if (foundListing) {
         setHighlightedListingId(listingId);
-        setCurrentView(AppView.LISTINGS_MARKETPLACE);
-        // Clean the URL
-        window.history.replaceState({}, document.title, window.location.pathname);
+        navigate('/products', true);
       }
     }
   }, [listings]);
-
-  // Clear initial search term when navigating away from marketplace
-  useEffect(() => {
-    if (currentView !== AppView.LISTINGS_MARKETPLACE) {
-      setInitialMarketplaceSearch(null);
-    }
-  }, [currentView]);
   
   // Update favicon dynamically
   useEffect(() => {
@@ -253,12 +275,51 @@ const App: React.FC = () => {
     }
   }, [siteConfig.favicon]);
 
+  // Handle redirects
+  useEffect(() => {
+      const isLoggedIn = currentUser || currentTeamMember;
+      if (pathname === '/' && isLoggedIn) {
+          navigate(currentTeamMember ? '/admin' : '/dashboard', true);
+      }
+      const isProtectedRoute = ['/dashboard', '/post-requirement'].includes(pathname);
+      if (isProtectedRoute && !currentUser && !currentTeamMember) {
+          navigate('/login', true);
+      }
+      if (pathname === '/admin' && !currentTeamMember) {
+          navigate('/login', true);
+      }
+  }, [pathname, currentUser, currentTeamMember]);
+
+  // Sync state with URL
+  useEffect(() => {
+    const serviceMatch = pathname.match(/^\/services\/(.*)$/);
+    if (serviceMatch) {
+      const serviceSlug = serviceMatch[1];
+      const service = services.find(s => slugify(s.name) === serviceSlug);
+      setSelectedService(service || null);
+    } else {
+      setSelectedService(null);
+    }
+
+    const productMatch = pathname.match(/^\/products\/(\d+)$/);
+    if (productMatch) {
+      const productId = parseInt(productMatch[1], 10);
+      const product = products.find(p => p.id === productId);
+      setSelectedProduct(product || null);
+    } else {
+      setSelectedProduct(null);
+    }
+
+    if (pathname !== '/confirmation') setConfirmationMessage(null);
+
+  }, [pathname, services, products]);
+
+
   const saveToLocalStorage = (key: string, data: any) => {
     try {
-      const stringifiedData = JSON.stringify(data);
-      localStorage.setItem(key, stringifiedData);
+      localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
-      if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+       if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
         console.error(`LocalStorage Quota Exceeded for key: ${key}`, e);
         setToast({
           id: Date.now(),
@@ -276,16 +337,16 @@ const App: React.FC = () => {
 
 
   // --- Save state to localStorage on changes ---
-  useEffect(() => { saveToLocalStorage('bant_users', users); }, [users]);
-  useEffect(() => { saveToLocalStorage('bant_team', teamMembers); }, [teamMembers]);
-  useEffect(() => { saveToLocalStorage('bant_listings', listings); }, [listings]);
-  useEffect(() => { saveToLocalStorage('bant_services', services); }, [services]);
-  useEffect(() => { saveToLocalStorage('bant_vendors', vendors); }, [vendors]);
-  useEffect(() => { saveToLocalStorage('bant_qualified_leads', qualifiedLeads); }, [qualifiedLeads]);
-  useEffect(() => { saveToLocalStorage('bant_site_config', siteConfig); }, [siteConfig]);
-  useEffect(() => { saveToLocalStorage('bant_products', products); }, [products]);
-  useEffect(() => { saveToLocalStorage('bant_product_categories', productCategories); }, [productCategories]);
-  useEffect(() => { saveToLocalStorage('bant_vendor_applications', vendorApplications); }, [vendorApplications]);
+  useEffect(() => { localStorage.setItem('bant_users', JSON.stringify(users)); }, [users]);
+  useEffect(() => { localStorage.setItem('bant_team', JSON.stringify(teamMembers)); }, [teamMembers]);
+  useEffect(() => { localStorage.setItem('bant_listings', JSON.stringify(listings)); }, [listings]);
+  useEffect(() => { localStorage.setItem('bant_services', JSON.stringify(services)); }, [services]);
+  useEffect(() => { localStorage.setItem('bant_vendors', JSON.stringify(vendors)); }, [vendors]);
+  useEffect(() => { localStorage.setItem('bant_qualified_leads', JSON.stringify(qualifiedLeads)); }, [qualifiedLeads]);
+  useEffect(() => { localStorage.setItem('bant_site_config', JSON.stringify(siteConfig)); }, [siteConfig]);
+  useEffect(() => { localStorage.setItem('bant_products', JSON.stringify(products)); }, [products]);
+  useEffect(() => { localStorage.setItem('bant_product_categories', JSON.stringify(productCategories)); }, [productCategories]);
+  useEffect(() => { localStorage.setItem('bant_vendor_applications', JSON.stringify(vendorApplications)); }, [vendorApplications]);
 
   const handleSendWhatsApp = async (recipient: string, message: string) => {
     if (siteConfig.whatsappConfig?.enabled && recipient) {
@@ -304,33 +365,21 @@ const App: React.FC = () => {
     return await whatsAppService.sendMessage(config, config.adminMobile, "This is a test message from BANTConfirm.");
   };
 
-  const handleNav = (view: AppView) => {
-    if (view === AppView.HOME) {
-      setSelectedService(null);
-      setSelectedProduct(null);
-    }
-    setConfirmationMessage(null); // Clear confirmation on navigation
-    setCurrentView(view);
-  };
-
   const handleMarketplaceSearch = (term: string) => {
-    setInitialMarketplaceSearch(term);
-    handleNav(AppView.LISTINGS_MARKETPLACE);
+    navigate(`/products?q=${encodeURIComponent(term)}`);
   };
 
   const handleGetQuote = (serviceName?: string) => {
-    setInitialServiceForForm(serviceName);
-    setCurrentView(AppView.LEAD_FORM);
+    const path = serviceName ? `/get-quote?service=${encodeURIComponent(serviceName)}` : '/get-quote';
+    navigate(path);
   };
   
   const handleSelectService = (service: Service) => {
-    setSelectedService(service);
-    setCurrentView(AppView.SERVICE_DETAIL);
+    navigate(`/services/${slugify(service.name)}`);
   };
 
   const handleSelectProduct = (product: Product) => {
-    setSelectedProduct(product);
-    setCurrentView(AppView.PRODUCT_DETAIL);
+    navigate(`/products/${product.id}`);
   };
 
   const handleBookDemo = (product: Product) => {
@@ -345,7 +394,7 @@ const App: React.FC = () => {
     localStorage.removeItem('bant_conversation');
     setSavedConversation(null);
     setLeadDetails(details);
-    setCurrentView(AppView.BANT_ASSISTANT);
+    navigate('/bant-assistant');
   };
 
   const handleBantComplete = async (data: BantData) => {
@@ -361,7 +410,7 @@ const App: React.FC = () => {
       };
       
       setBantData(data);
-      setCurrentView(AppView.CONFIRMATION);
+      navigate('/confirmation');
       setIsLeadMatching(true);
       setLastMatchedVendors(null);
       
@@ -419,22 +468,21 @@ const App: React.FC = () => {
   const handleStartOver = () => {
     setLeadDetails(null);
     setBantData(null);
-    setSelectedService(null);
     localStorage.removeItem('bant_conversation');
     setSavedConversation(null);
-    setCurrentView(AppView.HOME);
+    navigate('/');
   }
 
   const handleContinueConversation = () => {
     if (savedConversation) {
       setLeadDetails(savedConversation.leadDetails);
-      setCurrentView(AppView.BANT_ASSISTANT);
+      navigate('/bant-assistant');
     }
   };
   
   const handleContinueLeadPosterConversation = () => {
     if (savedLeadPosterConversation) {
-      handleNav(AppView.AI_LEAD_POSTER);
+      navigate('/post-requirement');
     }
   };
 
@@ -473,7 +521,7 @@ const App: React.FC = () => {
       `New requirement posted by ${newListing.authorName}: "${newListing.title}"`
     );
 
-    setCurrentView(currentUser ? AppView.DASHBOARD : AppView.LISTINGS_MARKETPLACE);
+    navigate(currentUser ? '/dashboard' : '/products');
     setIsMatching(true);
 
     try {
@@ -563,11 +611,11 @@ const App: React.FC = () => {
     if ('role' in user) { // It's a TeamMember
       setCurrentTeamMember(user);
       setCurrentUser(null);
-      setCurrentView(AppView.ADMIN_DASHBOARD);
+      navigate('/admin');
     } else { // It's a User
       setCurrentUser(user);
       setCurrentTeamMember(null);
-      setCurrentView(AppView.DASHBOARD);
+      navigate('/dashboard');
     }
   };
 
@@ -576,7 +624,7 @@ const App: React.FC = () => {
     setUsers(prev => [...prev, newUser]);
     setCurrentUser(newUser);
     setConfirmationMessage(`Welcome to BANTConfirm, ${newUser.name.split(' ')[0]}! A confirmation email has been sent to ${newUser.email}.`);
-    setCurrentView(AppView.DASHBOARD);
+    navigate('/dashboard');
     if (newUser.mobile) {
         handleSendWhatsApp(newUser.mobile, `Welcome to BANTConfirm, ${newUser.name.split(' ')[0]}! We're glad to have you.`);
     }
@@ -585,7 +633,7 @@ const App: React.FC = () => {
   const handleLogout = () => {
     setCurrentUser(null);
     setCurrentTeamMember(null);
-    setCurrentView(AppView.HOME);
+    navigate('/');
     localStorage.removeItem('bant_lead_poster_conversation');
     setSavedLeadPosterConversation(null);
   };
@@ -735,7 +783,7 @@ const App: React.FC = () => {
 
   const handlePostFromProduct = (product: Product) => {
     if (!currentUser) {
-      handleNav(AppView.LOGIN);
+      navigate('/login');
       return;
     }
     
@@ -752,7 +800,7 @@ const App: React.FC = () => {
 
   const handlePostFromListing = (listing: RequirementListing) => {
     if (!currentUser) {
-      handleNav(AppView.LOGIN);
+      navigate('/login');
       return;
     }
     
@@ -777,48 +825,37 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
-    const isLoggedIn = currentUser || currentTeamMember;
-
-    let viewToRender = currentView;
-    // This logic handles redirection for logged-in users trying to access the homepage.
-    if (currentView === AppView.HOME && isLoggedIn) {
-      viewToRender = currentTeamMember ? AppView.ADMIN_DASHBOARD : AppView.DASHBOARD;
-    }
-
     const PageWrapper: React.FC<{children: React.ReactNode}> = ({children}) => (
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
         {children}
       </div>
     );
-
+    
     const loggedInUser = currentUser || currentTeamMember;
 
-    switch (viewToRender) {
-      case AppView.HOME:
-        return <HomePage 
+    if (pathname === '/') {
+       return <HomePage 
           services={services}
           products={productsWithLeadCounts}
           vendors={vendors}
           onGetQuote={handleGetQuote}
-          onPostRequirement={() => handleNav(currentUser ? AppView.AI_LEAD_POSTER : AppView.SIGNUP)}
+          onPostRequirement={() => navigate(currentUser ? '/post-requirement' : '/signup')}
           onSelectProduct={handleSelectProduct}
           onSelectService={handleSelectService}
           onBookDemo={handleBookDemo}
-          onNav={handleNav}
           onSearch={handleMarketplaceSearch}
           currentUser={loggedInUser}
+          navigate={navigate}
         />;
-      case AppView.DASHBOARD:
-        if (!currentUser) {
-          // User is not authenticated, render the Login component instead of causing a side-effect.
-          return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
-        }
+    }
+    if (pathname === '/dashboard') {
+        if (!currentUser) return null; // Redirected by effect
         return <Dashboard 
           user={currentUser} 
           userListings={listings.filter(l => l.authorName === currentUser.name)}
           products={productsWithLeadCounts}
           isMatching={isMatching}
-          onPostRequirement={() => handleNav(AppView.AI_LEAD_POSTER)}
+          onPostRequirement={() => navigate('/post-requirement')}
           savedConversation={savedConversation}
           onContinueConversation={handleContinueConversation}
           savedLeadPosterConversation={savedLeadPosterConversation}
@@ -829,11 +866,9 @@ const App: React.FC = () => {
           onSelectProduct={handleSelectProduct}
           onBookDemo={handleBookDemo}
         />
-      case AppView.ADMIN_DASHBOARD:
-         if (!currentTeamMember) {
-          // Team member is not authenticated, render the Login component.
-          return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
-        }
+    }
+    if (pathname === '/admin') {
+         if (!currentTeamMember) return null; // Redirected by effect
         return <PageWrapper><AdminDashboard 
             currentUser={currentTeamMember}
             stats={{
@@ -880,11 +915,8 @@ const App: React.FC = () => {
             onUpdateTeamMember={handleUpdateTeamMember}
             onDeleteTeamMember={handleDeleteTeamMember}
         /></PageWrapper>
-      case AppView.SERVICE_DETAIL: {
-        if (!selectedService) {
-          setCurrentView(AppView.HOME);
-          return null;
-        }
+    }
+    if (selectedService) {
         const relevantVendors = vendors.filter(vendor => 
           vendor.specialties.includes(selectedService.name)
         );
@@ -892,41 +924,28 @@ const App: React.FC = () => {
           service={selectedService} 
           vendors={relevantVendors}
           promoBanner={siteConfig.promoBanner}
-          onBack={() => {
-            setSelectedService(null);
-            setCurrentView(AppView.HOME);
-          }}
+          onBack={() => navigate('/')}
           onGetQuote={() => handleGetQuote(selectedService.name)}
         />;
-      }
-      case AppView.PRODUCT_DETAIL: {
-        if (!selectedProduct) {
-          setCurrentView(AppView.HOME);
-          return null;
-        }
+    }
+    if (selectedProduct) {
         return <ProductDetail 
           product={selectedProduct}
-          onBack={() => {
-            setSelectedProduct(null);
-            setCurrentView(AppView.LISTINGS_MARKETPLACE);
-          }}
+          onBack={() => navigate('/products')}
           onBookDemo={handleBookDemo}
           onPostRequirement={handlePostFromProduct}
         />
       }
-      case AppView.LEAD_FORM:
-        return <PageWrapper><LeadForm onSubmit={handleLeadSubmit} initialService={initialServiceForForm} services={services} /></PageWrapper>;
-      case AppView.BANT_ASSISTANT:
-        if (!leadDetails) {
-          setCurrentView(AppView.LEAD_FORM);
-          return null;
-        }
+    if (pathname === '/get-quote') {
+        const params = new URLSearchParams(window.location.search);
+        return <PageWrapper><LeadForm onSubmit={handleLeadSubmit} initialService={params.get('service') || undefined} services={services} /></PageWrapper>;
+    }
+    if (pathname === '/bant-assistant') {
+        if (!leadDetails) { navigate('/get-quote', true); return null; }
         return <PageWrapper><BantAssistant leadDetails={leadDetails} onComplete={handleBantComplete} /></PageWrapper>;
-      case AppView.CONFIRMATION:
-        if (!bantData || !leadDetails) {
-          setCurrentView(AppView.LEAD_FORM);
-          return null;
-        }
+    }
+    if (pathname === '/confirmation') {
+        if (!bantData || !leadDetails) { navigate('/get-quote', true); return null; }
         return <PageWrapper><LeadConfirmation 
                  leadDetails={leadDetails} 
                  bantData={bantData} 
@@ -934,40 +953,48 @@ const App: React.FC = () => {
                  isMatching={isLeadMatching}
                  matchedVendors={lastMatchedVendors}
                /></PageWrapper>;
-      case AppView.AI_SOLUTION_FINDER:
+    }
+    if (pathname === '/ai-solution-finder') {
         return <PageWrapper><AISolutionFinder onSelectService={handleSelectService} services={services} vendors={vendors} /></PageWrapper>;
-      case AppView.LISTINGS_MARKETPLACE:
+    }
+    if (pathname === '/products') {
+        const params = new URLSearchParams(window.location.search);
         return <ListingsMarketplace 
                  products={productsWithLeadCounts} 
-                 onPostRequirement={() => handleNav(currentUser ? AppView.AI_LEAD_POSTER : AppView.SIGNUP)} 
+                 onPostRequirement={() => navigate(currentUser ? '/post-requirement' : '/signup')} 
                  onSelectProduct={handleSelectProduct}
                  onBookDemo={handleBookDemo}
-                 initialSearchTerm={initialMarketplaceSearch}
+                 initialSearchTerm={params.get('q') || ''}
                />;
-       case AppView.AI_LEAD_POSTER:
-        if (!currentUser) {
-          setCurrentView(AppView.LOGIN);
-          return null;
-        }
-        return <PageWrapper><AILeadPoster onComplete={handleRequirementPosted} currentUser={currentUser} /></PageWrapper>;
-      case AppView.ABOUT:
-        return <AboutPage />;
-      case AppView.CONTACT:
-        return <ContactPage />;
-      case AppView.FAQ:
-        return <PageWrapper><FAQPage /></PageWrapper>;
-      case AppView.LOGIN:
-        return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
-      case AppView.SIGNUP:
-        return <PageWrapper><Signup onSignup={handleSignup} onSwitchToLogin={() => handleNav(AppView.LOGIN)} /></PageWrapper>;
-      case AppView.FORGOT_PASSWORD:
-        return <PageWrapper><ForgotPassword onBackToLogin={() => handleNav(AppView.LOGIN)} /></PageWrapper>;
-      case AppView.BECOME_VENDOR:
-        return <PageWrapper><BecomeAVendorPage onSubmit={handleVendorApplicationSubmit} /></PageWrapper>;
-      default:
-        setCurrentView(AppView.HOME);
-        return null;
     }
+    if (pathname === '/post-requirement') {
+        if (!currentUser) { navigate('/login', true); return null; }
+        return <PageWrapper><AILeadPoster onComplete={handleRequirementPosted} currentUser={currentUser} /></PageWrapper>;
+    }
+    if (pathname === '/about') return <AboutPage />;
+    if (pathname === '/contact') return <ContactPage />;
+    if (pathname === '/faq') return <PageWrapper><FAQPage /></PageWrapper>;
+    if (pathname === '/login') return <PageWrapper><Login onLogin={handleLogin} /></PageWrapper>;
+
+    if (pathname === '/signup') return <PageWrapper><Signup onSignup={handleSignup} /></PageWrapper>;
+
+    if (pathname === '/forgot-password') return <PageWrapper><ForgotPassword /></PageWrapper>;
+    if (pathname === '/become-a-vendor') return <PageWrapper><BecomeAVendorPage onSubmit={handleVendorApplicationSubmit} /></PageWrapper>;
+
+    // Fallback to home page for any unknown route
+    return <HomePage 
+      services={services}
+      products={productsWithLeadCounts}
+      vendors={vendors}
+      onGetQuote={handleGetQuote}
+      onPostRequirement={() => navigate(currentUser ? '/post-requirement' : '/signup')}
+      onSelectProduct={handleSelectProduct}
+      onSelectService={handleSelectService}
+      onBookDemo={handleBookDemo}
+      onSearch={handleMarketplaceSearch}
+      currentUser={loggedInUser}
+      navigate={navigate}
+    />;
   };
 
   const loggedInUser = currentUser || currentTeamMember;
@@ -991,7 +1018,6 @@ const App: React.FC = () => {
         />
       )}
       <Header 
-        onNav={handleNav} 
         currentUser={loggedInUser} 
         onLogout={handleLogout} 
         notifications={notifications}
@@ -1001,7 +1027,7 @@ const App: React.FC = () => {
       <main className="flex-grow">
         {renderContent()}
       </main>
-      <Footer onNav={handleNav} socialLinks={siteConfig.socialLinks} logo={siteConfig.logo} />
+      <Footer socialLinks={siteConfig.socialLinks} logo={siteConfig.logo} />
     </div>
   );
 };

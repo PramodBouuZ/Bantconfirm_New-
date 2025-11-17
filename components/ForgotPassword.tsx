@@ -1,12 +1,9 @@
+
 import React, { useState } from 'react';
 import { MailIcon } from './icons/MailIcon';
 import { CheckCircleIcon } from './icons/CheckCircleIcon';
 
-interface ForgotPasswordProps {
-  onBackToLogin: () => void;
-}
-
-const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBackToLogin }) => {
+const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
@@ -27,12 +24,12 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBackToLogin }) => {
         <p className="text-gray-600 mb-6">
           If an account exists for <span className="font-semibold text-gray-800">{email}</span>, you will receive an email with instructions on how to reset your password.
         </p>
-        <button
-          onClick={onBackToLogin}
-          className="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"
+        <a
+          href="/login"
+          className="w-full block text-center bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-colors duration-300"
         >
           Back to Login
-        </button>
+        </a>
       </div>
     );
   }
@@ -68,9 +65,9 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ onBackToLogin }) => {
       </form>
       <p className="text-center text-sm text-gray-600 mt-6">
         Remember your password?{' '}
-        <button onClick={onBackToLogin} className="font-semibold text-blue-600 hover:text-blue-500">
+        <a href="/login" className="font-semibold text-blue-600 hover:text-blue-500">
           Back to Login
-        </button>
+        </a>
       </p>
     </div>
   );
