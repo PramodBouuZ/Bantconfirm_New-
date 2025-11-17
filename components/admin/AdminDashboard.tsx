@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import { User, RequirementListing, Vendor, Service, QualifiedLead, SiteConfig, Product, VendorApplication, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from '../../types';
 import AdminStats from './AdminStats';
 import AdminVendors from './AdminVendors';
@@ -87,6 +88,18 @@ const HorizontalNavItem: React.FC<{
     );
 };
 
+const ChevronLeftIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+    </svg>
+);
+
+const ChevronRightIcon: React.FC<{ className?: string }> = ({ className = 'h-5 w-5' }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+    </svg>
+);
+
 
 const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     const { 
@@ -102,6 +115,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     } = props;
     
     const [view, setView] = useState<AdminView>(currentUser.role === TeamRole.Admin ? 'stats' : 'leads');
+    const navContainerRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
     
     const isAdmin = currentUser.role === TeamRole.Admin;
 
@@ -119,6 +135,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
     ];
     
     const availableNavItems = navItems.filter(item => isAdmin || !item.adminOnly);
+
+    const checkScroll = () => {
+        const container = navContainerRef.current;
+        if (container) {
+            const { scrollLeft, scrollWidth, clientWidth } = container;
+            setCanScrollLeft(scrollLeft > 0);
+            setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 1);
+        }
+    };
+    
+    useEffect(() => {
+        const container = navContainerRef.current;
+        if (container) {
+            checkScroll();
+            container.addEventListener('scroll', checkScroll, { passive: true });
+            
+            const resizeObserver = new ResizeObserver(checkScroll);
+            resizeObserver.observe(container);
+            
+            return () => {
+                container.removeEventListener('scroll', checkScroll);
+                resizeObserver.disconnect();
+            };
+        }
+    }, [availableNavItems]);
+
+    const handleScroll = (direction: 'left' | 'right') => {
+        if (navContainerRef.current) {
+            const scrollAmount = direction === 'left' ? -250 : 250;
+            navContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+        }
+    };
 
 
     const renderView = () => {
@@ -173,18 +221,38 @@ const AdminDashboard: React.FC<AdminDashboardProps> = (props) => {
                 <h1 className="text-2xl font-bold text-gray-900">Admin Panel</h1>
                 <p className="text-gray-600">Welcome back, {currentUser.name}.</p>
             </div>
-            <div className="overflow-x-auto scrollbar-hide mb-6">
-                <nav className="flex items-center space-x-1 bg-white p-1.5 rounded-lg shadow-sm border border-gray-200 w-max">
-                    {availableNavItems.map(item => (
-                       <HorizontalNavItem 
-                            key={item.view}
-                            icon={item.icon}
-                            label={item.label}
-                            isActive={view === item.view}
-                            onClick={() => setView(item.view)}
-                       />
-                    ))}
-                </nav>
+             <div className="relative group mb-6">
+                {canScrollLeft && (
+                    <button 
+                        onClick={() => handleScroll('left')}
+                        className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm p-1 rounded-full shadow-md border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Scroll left"
+                    >
+                        <ChevronLeftIcon className="h-5 w-5 text-gray-700" />
+                    </button>
+                )}
+                <div ref={navContainerRef} className="overflow-x-auto scrollbar-hide">
+                    <nav className="flex items-center space-x-1 bg-white p-1.5 rounded-lg shadow-sm border border-gray-200 w-max">
+                        {availableNavItems.map(item => (
+                           <HorizontalNavItem 
+                                key={item.view}
+                                icon={item.icon}
+                                label={item.label}
+                                isActive={view === item.view}
+                                onClick={() => setView(item.view)}
+                           />
+                        ))}
+                    </nav>
+                </div>
+                {canScrollRight && (
+                    <button 
+                        onClick={() => handleScroll('right')}
+                        className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/70 backdrop-blur-sm p-1 rounded-full shadow-md border border-gray-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                        aria-label="Scroll right"
+                    >
+                        <ChevronRightIcon className="h-5 w-5 text-gray-700" />
+                    </button>
+                )}
             </div>
             <main>
                 {renderView()}
