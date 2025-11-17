@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
@@ -764,6 +762,8 @@ const App: React.FC = () => {
       </div>
     );
 
+    const loggedInUser = currentUser || currentTeamMember;
+
     switch (viewToRender) {
       case AppView.HOME:
         return <HomePage 
@@ -777,6 +777,7 @@ const App: React.FC = () => {
           onBookDemo={handleBookDemo}
           onNav={handleNav}
           onSearch={handleMarketplaceSearch}
+          currentUser={loggedInUser}
         />;
       case AppView.DASHBOARD:
         if (!currentUser) {
@@ -804,7 +805,7 @@ const App: React.FC = () => {
           // Team member is not authenticated, render the Login component.
           return <PageWrapper><Login onLogin={handleLogin} onSwitchToSignup={() => handleNav(AppView.SIGNUP)} onForgotPassword={() => handleNav(AppView.FORGOT_PASSWORD)} users={users} teamMembers={teamMembers} /></PageWrapper>;
         }
-        return <AdminDashboard 
+        return <PageWrapper><AdminDashboard 
             currentUser={currentTeamMember}
             stats={{
               users: users.length,
@@ -849,7 +850,7 @@ const App: React.FC = () => {
             onAddTeamMember={handleAddTeamMember}
             onUpdateTeamMember={handleUpdateTeamMember}
             onDeleteTeamMember={handleDeleteTeamMember}
-        />
+        /></PageWrapper>
       case AppView.SERVICE_DETAIL: {
         if (!selectedService) {
           setCurrentView(AppView.HOME);

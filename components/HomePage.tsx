@@ -1,11 +1,11 @@
 
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Product, Service, AppView, Vendor } from '../types';
+import { Product, Service, AppView, Vendor, User, TeamMember } from '../types';
 import ProductCard from './ProductCard';
 import ServiceCard from './ServiceCard';
 import VendorLogos from './VendorLogos';
 import PromotionalBanner from './PromotionalBanner';
+import { EditIcon } from './icons/EditIcon';
 
 interface HomePageProps {
   services: Service[];
@@ -18,6 +18,7 @@ interface HomePageProps {
   onGetQuote: (serviceName?: string) => void;
   onPostRequirement: () => void;
   onSearch: (term: string) => void;
+  currentUser: User | TeamMember | null;
 }
 
 const animatedWords = ["IT Leads", "Software Deals", "Cloud Solutions", "Telco Needs"];
@@ -34,10 +35,12 @@ const ChevronRight: React.FC<{className?: string}> = ({ className }) => (
     </svg>
 );
 
-const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSelectProduct, onSelectService, onBookDemo, onNav, onGetQuote, onPostRequirement, onSearch }) => {
+const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSelectProduct, onSelectService, onBookDemo, onNav, onGetQuote, onPostRequirement, onSearch, currentUser }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [wordIndex, setWordIndex] = useState(0);
+    
+    const isTeamMember = currentUser && 'role' in currentUser;
     
     const productsByService = useMemo(() => {
         return services.map(service => {
@@ -137,7 +140,18 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
             {/* New Arrival Products */}
             <section className="py-12 bg-gray-50">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8">New Arrival Products</h2>
+                    <div className="flex items-center gap-4 mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900">New Arrival Products</h2>
+                        {isTeamMember && (
+                            <button
+                                onClick={() => onNav(AppView.ADMIN_DASHBOARD)}
+                                className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 bg-gray-200 hover:bg-blue-50 py-1 px-3 rounded-full transition-colors"
+                                title="Go to Admin Panel to manage products"
+                            >
+                                <EditIcon /> Manage
+                            </button>
+                        )}
+                    </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {newArrivalProducts.map(product => (
                             <ProductCard key={product.id} product={product} onSelect={onSelectProduct} onBookDemo={onBookDemo} />
@@ -152,7 +166,18 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
              {/* Featured IT Solutions */}
             <section className="py-16">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8">Featured IT Solutions</h2>
+                     <div className="flex items-center gap-4 mb-8">
+                        <h2 className="text-3xl font-bold text-gray-900">Featured IT Solutions</h2>
+                        {isTeamMember && (
+                            <button
+                                onClick={() => onNav(AppView.ADMIN_DASHBOARD)}
+                                className="flex items-center gap-2 text-sm text-gray-500 hover:text-blue-600 bg-gray-100 hover:bg-blue-50 py-1 px-3 rounded-full transition-colors"
+                                title="Go to Admin Panel to manage products"
+                            >
+                                <EditIcon /> Manage
+                            </button>
+                        )}
+                    </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {featuredITProducts.map(product => (
                             <ProductCard key={product.id} product={product} onSelect={onSelectProduct} onBookDemo={onBookDemo} />
@@ -165,7 +190,18 @@ const HomePage: React.FC<HomePageProps> = ({ services, products, vendors, onSele
             <section className="py-16 bg-gray-900 text-white">
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-3xl font-bold">Telco Products & Services</h2>
+                        <div className="flex items-center gap-4">
+                            <h2 className="text-3xl font-bold">Telco Products & Services</h2>
+                            {isTeamMember && (
+                                <button
+                                    onClick={() => onNav(AppView.ADMIN_DASHBOARD)}
+                                    className="flex items-center gap-2 text-sm text-gray-300 hover:text-white bg-gray-700 hover:bg-gray-600 py-1 px-3 rounded-full transition-colors"
+                                    title="Go to Admin Panel to manage products"
+                                >
+                                    <EditIcon /> Manage
+                                </button>
+                            )}
+                        </div>
                         <button onClick={() => onNav(AppView.LISTINGS_MARKETPLACE)} className="bg-blue-600 font-semibold py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors">View All Items</button>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
