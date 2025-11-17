@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Notification } from '../types';
 import { BellIcon } from './icons/BellIcon';
 import { XIcon } from './icons/XIcon';
+import { InfoIcon } from './icons/InfoIcon';
+import { CheckCircleIcon } from './icons/CheckCircleIcon';
 
 interface ToastNotificationProps {
   notification: Notification;
@@ -30,6 +32,22 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ notification, onC
     setTimeout(onClose, 300); // Wait for animation to finish before calling parent onClose
   };
 
+  const iconMap = {
+    info: <BellIcon />,
+    success: <CheckCircleIcon />,
+    warning: <InfoIcon />, // Reusing info icon for warning
+    error: <InfoIcon />, // Reusing info icon for error
+  };
+
+  const colorMap = {
+    info: 'bg-indigo-100 text-indigo-600',
+    success: 'bg-green-100 text-green-600',
+    warning: 'bg-amber-100 text-amber-600',
+    error: 'bg-red-100 text-red-600',
+  };
+
+  const notificationType = notification.type || 'info';
+
   return (
     <div 
       className={`fixed top-24 right-5 z-[100] w-full max-w-sm bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden transform transition-all duration-300 ease-in-out ${
@@ -42,12 +60,12 @@ const ToastNotification: React.FC<ToastNotificationProps> = ({ notification, onC
       <div className="p-4">
         <div className="flex items-start">
           <div className="flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center">
-              <BellIcon />
+            <div className={`h-10 w-10 rounded-full flex items-center justify-center ${colorMap[notificationType]}`}>
+              {iconMap[notificationType]}
             </div>
           </div>
           <div className="ml-3 w-0 flex-1 pt-0.5">
-            <p className="text-sm font-medium text-gray-900">New Marketplace Activity</p>
+            <p className="text-sm font-medium text-gray-900">{notification.title || 'Notification'}</p>
             <p className="mt-1 text-sm text-gray-500">{notification.message}</p>
           </div>
           <div className="ml-4 flex-shrink-0 flex">

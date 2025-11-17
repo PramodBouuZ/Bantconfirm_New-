@@ -1,5 +1,6 @@
 
 
+
 import React from 'react';
 
 export enum AppView {
@@ -168,7 +169,9 @@ export interface StoredLeadPosterConversation {
 
 export interface Notification {
   id: number;
+  title?: string;
   message: string;
+  type?: 'info' | 'success' | 'warning' | 'error';
   timestamp: string; // ISO string
   read: boolean;
 }

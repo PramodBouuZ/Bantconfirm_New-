@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppView, BantData, LeadDetails, Service, RequirementListing, User, StoredConversation, Notification, Vendor, QualifiedLead, Product, VendorApplication, StoredLeadPosterConversation, SiteConfig, AssignmentHistoryEntry, ProductCategory, WhatsAppConfig, TeamMember, TeamRole } from './types';
 import Header from './components/Header';
@@ -252,17 +253,39 @@ const App: React.FC = () => {
     }
   }, [siteConfig.favicon]);
 
+  const saveToLocalStorage = (key: string, data: any) => {
+    try {
+      const stringifiedData = JSON.stringify(data);
+      localStorage.setItem(key, stringifiedData);
+    } catch (e) {
+      if (e instanceof DOMException && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+        console.error(`LocalStorage Quota Exceeded for key: ${key}`, e);
+        setToast({
+          id: Date.now(),
+          title: 'Storage Error',
+          message: 'Could not save changes. Your browser storage is full. Please remove some large images or clear site data.',
+          type: 'error',
+          timestamp: new Date().toISOString(),
+          read: false,
+        });
+      } else {
+        console.error(`Error saving to localStorage for key: ${key}`, e);
+      }
+    }
+  };
+
+
   // --- Save state to localStorage on changes ---
-  useEffect(() => { try { localStorage.setItem('bant_users', JSON.stringify(users)); } catch (e) { console.error(e); } }, [users]);
-  useEffect(() => { try { localStorage.setItem('bant_team', JSON.stringify(teamMembers)); } catch (e) { console.error(e); } }, [teamMembers]);
-  useEffect(() => { try { localStorage.setItem('bant_listings', JSON.stringify(listings)); } catch (e) { console.error(e); } }, [listings]);
-  useEffect(() => { try { localStorage.setItem('bant_services', JSON.stringify(services)); } catch (e) { console.error(e); } }, [services]);
-  useEffect(() => { try { localStorage.setItem('bant_vendors', JSON.stringify(vendors)); } catch (e) { console.error(e); } }, [vendors]);
-  useEffect(() => { try { localStorage.setItem('bant_qualified_leads', JSON.stringify(qualifiedLeads)); } catch (e) { console.error(e); } }, [qualifiedLeads]);
-  useEffect(() => { try { localStorage.setItem('bant_site_config', JSON.stringify(siteConfig)); } catch (e) { console.error(e); } }, [siteConfig]);
-  useEffect(() => { try { localStorage.setItem('bant_products', JSON.stringify(products)); } catch (e) { console.error(e); } }, [products]);
-  useEffect(() => { try { localStorage.setItem('bant_product_categories', JSON.stringify(productCategories)); } catch (e) { console.error(e); } }, [productCategories]);
-  useEffect(() => { try { localStorage.setItem('bant_vendor_applications', JSON.stringify(vendorApplications)); } catch (e) { console.error(e); } }, [vendorApplications]);
+  useEffect(() => { saveToLocalStorage('bant_users', users); }, [users]);
+  useEffect(() => { saveToLocalStorage('bant_team', teamMembers); }, [teamMembers]);
+  useEffect(() => { saveToLocalStorage('bant_listings', listings); }, [listings]);
+  useEffect(() => { saveToLocalStorage('bant_services', services); }, [services]);
+  useEffect(() => { saveToLocalStorage('bant_vendors', vendors); }, [vendors]);
+  useEffect(() => { saveToLocalStorage('bant_qualified_leads', qualifiedLeads); }, [qualifiedLeads]);
+  useEffect(() => { saveToLocalStorage('bant_site_config', siteConfig); }, [siteConfig]);
+  useEffect(() => { saveToLocalStorage('bant_products', products); }, [products]);
+  useEffect(() => { saveToLocalStorage('bant_product_categories', productCategories); }, [productCategories]);
+  useEffect(() => { saveToLocalStorage('bant_vendor_applications', vendorApplications); }, [vendorApplications]);
 
   const handleSendWhatsApp = async (recipient: string, message: string) => {
     if (siteConfig.whatsappConfig?.enabled && recipient) {
@@ -377,7 +400,9 @@ const App: React.FC = () => {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         setToast({
             id: Date.now(),
+            title: 'AI Matching Error',
             message: `AI vendor matching failed: ${errorMessage}`,
+            type: 'error',
             timestamp: new Date().toISOString(),
             read: false,
         });
@@ -434,7 +459,9 @@ const App: React.FC = () => {
 
     const newNotification: Notification = {
         id: Date.now(),
+        title: 'New Requirement Posted',
         message: `New requirement posted: "${newListing.title}"`,
+        type: 'info',
         timestamp: new Date().toISOString(),
         read: false,
     };
@@ -457,7 +484,9 @@ const App: React.FC = () => {
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
         setToast({
             id: Date.now(),
+            title: 'AI Matching Error',
             message: `AI vendor matching failed: ${errorMessage}`,
+            type: 'error',
             timestamp: new Date().toISOString(),
             read: false,
         });
@@ -945,7 +974,7 @@ const App: React.FC = () => {
 
   return (
     <div className="bg-white min-h-screen flex flex-col text-gray-800" style={{fontFamily: "'Inter', sans-serif"}}>
-      {toast && currentTeamMember?.role === TeamRole.Admin && (
+      {toast && (
         <ToastNotification 
           notification={toast}
           onClose={() => setToast(null)}
